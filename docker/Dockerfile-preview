@@ -1,4 +1,4 @@
-# Single-stage development build for local testing
+# Single-stage build for preview environment
 FROM node:18-alpine
 
 WORKDIR /app
@@ -19,9 +19,10 @@ COPY . .
 ENV HOST=0.0.0.0
 ENV PORT=3000
 ENV NODE_ENV=development
-
+ENV SSR_MODE=true
+ENV PUBLIC_PREVIEW=true
 # Expose the port Astro runs on (default is 3000)
 EXPOSE 3000
 
-# Start the application in development mode
+# Start the application in production mode
 CMD ["npm", "run", "dev"]

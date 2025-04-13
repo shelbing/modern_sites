@@ -10,7 +10,7 @@ NC='\033[0m' # No Color
 # Default values
 REMOTE_SERVER="steffen@v2202307202907233305.hotsrv.de"
 REMOTE_DIR="/home/steffen/Entwicklung/sites"
-DOMAIN="wilderstern.siriushms.com"
+DOMAIN="szs-preview.siriushms.com"
 
 # SSH connection sharing configuration
 SSH_CONTROL_PATH="/tmp/ssh-deploy"
@@ -39,11 +39,11 @@ cleanup() {
 trap cleanup EXIT
 
 # Display deployment information
-echo -e "Deploying Hotel Stern to:"
+echo -e "Deploying Preview Environment to:"
 echo -e "  Server: ${REMOTE_SERVER}"
 echo -e "  Directory: ${REMOTE_DIR}"
 echo -e "  Domain: ${DOMAIN}"
-echo -e "  Docker Image: steffenhelbing/hotel_sites:latest"
+echo -e "  Docker Image: steffenhelbing/hotel_sites_preview:latest"
 read -p "Continue with deployment? (y/n) " CONTINUE
 if [ "$CONTINUE" != "y" ]; then
   echo "Deployment cancelled."
@@ -75,22 +75,27 @@ fi
 
 # Set default values if not provided in config
 DOCKER_USERNAME=${DOCKER_USERNAME:-"steffenhelbing"}
-DOCKER_REPO=${DOCKER_REPO:-"hotel_sites"}
+DOCKER_REPO=${DOCKER_REPO:-"hotel_sites_preview"}
 DOCKER_TAG=${DOCKER_TAG:-"latest"}
 
 # Build and push Docker image
 echo "Building, tagging, and pushing image to Docker Hub..."
+# Ensure we're using the preview repository
+DOCKER_REPO="hotel_sites_preview"
 DOCKER_IMAGE="${DOCKER_USERNAME}/${DOCKER_REPO}:${DOCKER_TAG}"
 
 # Use the custom image name from docker-hub.conf if available
 if [ -n "$CUSTOM_IMAGE_NAME" ]; then
-  echo "Using image name: ${CUSTOM_IMAGE_NAME}"
-  docker build -t "${CUSTOM_IMAGE_NAME}" -f "${SCRIPT_DIR}/Dockerfile" "${PROJECT_ROOT}"
-  echo "Tagging image from ${CUSTOM_IMAGE_NAME} to ${DOCKER_IMAGE}"
-  docker tag "${CUSTOM_IMAGE_NAME}" "${DOCKER_IMAGE}"
+  # Add -preview suffix to custom image name
+  PREVIEW_IMAGE_NAME="${CUSTOM_IMAGE_NAME}-preview"
+  echo "Using image name: ${PREVIEW_IMAGE_NAME}"
+  docker build -t "${PREVIEW_IMAGE_NAME}" -f "${SCRIPT_DIR}/Dockerfile-preview" "${PROJECT_ROOT}"
+  echo "Tagging image from ${PREVIEW_IMAGE_NAME} to ${DOCKER_IMAGE}"
+  docker tag "${PREVIEW_IMAGE_NAME}" "${DOCKER_IMAGE}"
 else
   echo "Using default image name: ${DOCKER_IMAGE}"
-  docker build -t "${DOCKER_IMAGE}" -f "${SCRIPT_DIR}/Dockerfile" "${PROJECT_ROOT}"
+  # Force the correct image name by explicitly setting it
+  docker build -t "${DOCKER_USERNAME}/${DOCKER_REPO}:${DOCKER_TAG}" -f "${SCRIPT_DIR}/Dockerfile-preview" "${PROJECT_ROOT}"
 fi
 
 # Push image to Docker Hub
@@ -131,15 +136,16 @@ ssh_command "cat > $REMOTE_DIR/docker-compose.yml << 'EOL'
 version: '3.8'
 
 services:
-  hotel-stern:
+  hotel-stern-preview:
     image: ${DOCKER_USERNAME}/${DOCKER_REPO}:${DOCKER_TAG}
     env_file:
       - ./.env
     environment:
       - HOST=0.0.0.0
       - PORT=5000
-      - NODE_ENV=production
+      - NODE_ENV=development
       - SSR_MODE=true
+      - PUBLIC_PREVIEW=true
     networks:
       - containers_internal
       - containers_web
@@ -148,18 +154,18 @@ services:
       - \"traefik.docker.network=containers_web\"
 
       # HTTPS Route
-      - \"traefik.http.routers.hotel-stern.rule=Host(\`${DOMAIN}\`)\"
-      - \"traefik.http.routers.hotel-stern.entrypoints=websecure\"
-      - \"traefik.http.routers.hotel-stern.tls.certresolver=myresolver\"
-      - \"traefik.http.services.hotel-stern.loadbalancer.server.port=3000\"
-      - \"traefik.http.middlewares.hotel-stern-compress.compress=true\"
-      - \"traefik.http.routers.hotel-stern.middlewares=hotel-stern-compress\"
+      - \"traefik.http.routers.hotel-stern-preview.rule=Host(\`${DOMAIN}\`)\"
+      - \"traefik.http.routers.hotel-stern-preview.entrypoints=websecure\"
+      - \"traefik.http.routers.hotel-stern-preview.tls.certresolver=myresolver\"
+      - \"traefik.http.services.hotel-stern-preview.loadbalancer.server.port=3000\"
+      - \"traefik.http.middlewares.hotel-stern-preview-compress.compress=true\"
+      - \"traefik.http.routers.hotel-stern-preview.middlewares=hotel-stern-preview-compress\"
 
       # HTTP => HTTPS Redirect
-      - \"traefik.http.routers.hotel-stern-insecure.rule=Host(\`${DOMAIN}\`)\"
-      - \"traefik.http.routers.hotel-stern-insecure.entrypoints=web\"
-      - \"traefik.http.routers.hotel-stern-insecure.middlewares=hotel-stern-https-redirect\"
-      - \"traefik.http.middlewares.hotel-stern-https-redirect.redirectscheme.scheme=https\"
+      - \"traefik.http.routers.hotel-stern-preview-insecure.rule=Host(\`${DOMAIN}\`)\"
+      - \"traefik.http.routers.hotel-stern-preview-insecure.entrypoints=web\"
+      - \"traefik.http.routers.hotel-stern-preview-insecure.middlewares=hotel-stern-preview-https-redirect\"
+      - \"traefik.http.middlewares.hotel-stern-preview-https-redirect.redirectscheme.scheme=https\"
     restart: unless-stopped
 
 networks:
@@ -190,5 +196,5 @@ if [ $? -ne 0 ]; then
 fi
 
 echo -e "\n${GREEN}Deployment successful!${NC}"
-echo -e "Your Hotel Stern application is now available at: https://${DOMAIN}"
+echo -e "Your Preview application is now available at: https://${DOMAIN}"
 echo -e "To check the logs, run: ssh ${REMOTE_SERVER} \"cd ${REMOTE_DIR} && docker-compose logs -f\""

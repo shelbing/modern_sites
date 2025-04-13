@@ -23,6 +23,9 @@ import MenuItem from "./MenuItem.astro";
 import Logo from "./Logo.astro";
 import PreviewBadge from "../Scripts/PreviewBadge.astro";
 
+// Check if we're in preview mode
+const isPreview = import.meta.env.PREVIEW === 'true';
+
 // Get current path and language
 const path = Astro.url.pathname;
 const currentLang = path.split('/')[1];
@@ -56,8 +59,8 @@ const menuItems = menuBar[0].menuBarItems
 ---
 
 <header transition:persist>
-  <!-- Preview badge for development environment -->
-  <PreviewBadge text="Dies ist ein Preview"/>
+  <!-- Preview badge for top-right corner (Vercel previews) -->
+  <PreviewBadge />
 
   <!-- Main navigation bar -->
   <nav class="bg-menu-light font-serif  dark:bg-menu-dark border-gray-300 px-4 rounded-xl lg:px-6 py-2.5 mb-2 z-10">
