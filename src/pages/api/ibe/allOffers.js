@@ -5,11 +5,20 @@ export async function GET({ request }) {
     try {
         const url = new URL(request.url);
         const lang = url.searchParams.get('lang') || 'de';
+        const kategorie = url.searchParams.get('kategorie');
         const data = await getBundles(lang);
         // Extract different types of offers
-        const bundles = data.Bundles || [];
+        let bundles = data.Bundles || [];
         const rooms = data.Rooms || [];
         const services = data.Services || [];
+        
+        // Filter out inactive bundles
+        bundles = bundles.filter(bundle => bundle.Aktiviert === true);
+        
+        // Filter bundles by Kategorie if the parameter is provided
+        if (kategorie) {
+            bundles = bundles.filter(bundle => bundle.Kategorie === kategorie);
+        }
 
         return new Response(JSON.stringify({
             bundles,

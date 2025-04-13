@@ -1,0 +1,181 @@
+---
+/**
+ * BundleDisplay Component
+ *
+ * This component displays a single bundle offer in a card format.
+ *
+ * Props:
+ * - bundle: object - The bundle data to display
+ */
+import { renderRichText } from '@storyblok/astro';
+import BundleModal from './BundleModal.astro';
+
+interface Props {
+  bundle: {
+    _uid: string;
+    Title: string;
+    Beschreibung?: any;
+    TeaserImage?: {
+      filename?: string;
+      alt?: string;
+    };
+    Kategorie?: string;
+    AnreiseVon?: string;
+    AnreiseBis?: string;
+    BundleCode?: string;
+    Mindestaufenthalt?: string | number;
+    [key: string]: any;
+  };
+}
+
+const { bundle } = Astro.props;
+
+// Format date if available
+const formatDate = (dateString: string | undefined) => {
+  if (!dateString) return "";
+  try {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("de-DE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(date);
+  } catch (e) {
+    return dateString;
+  }
+};
+
+// Process rich text content using Storyblok's renderRichText
+const imageUrl = bundle.TeaserImage?.filename || "/images/placeholder.jpg";
+let richTextContent = "";
+
+// Handle rich text content if available
+if (bundle.Beschreibung && typeof bundle.Beschreibung === 'object') {
+  try {
+    richTextContent = renderRichText(bundle.Beschreibung);
+  } catch (error) {
+    console.error('Error rendering rich text:', error);
+  }
+}
+
+const validFrom = formatDate(bundle.AnreiseVon);
+const validTo = formatDate(bundle.AnreiseBis);
+
+// Process minimum stay if available
+let minStay = null;
+if (bundle.Mindestaufenthalt) {
+  // Convert to number if it's a string
+  const stayValue = typeof bundle.Mindestaufenthalt === 'string' 
+    ? parseInt(bundle.Mindestaufenthalt, 10) 
+    : bundle.Mindestaufenthalt;
+  
+  // Only use valid numbers
+  if (!isNaN(stayValue) && stayValue > 0) {
+    minStay = stayValue;
+  }
+}
+---
+
+<div
+  class="bundle-card bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:shadow-lg hover:-translate-y-1"
+>
+  <div class="relative aspect-video overflow-hidden">
+    <img
+      src={imageUrl}
+      alt={bundle.TeaserImage?.alt || bundle.Title}
+      class="w-full h-full object-cover"
+      loading="lazy"
+    />
+    {
+      bundle.Kategorie && (
+        <span class="absolute top-4 right-4 bg-white text-primary-600 px-3 py-1 rounded-full text-xs font-medium shadow-md">
+          {bundle.Kategorie}
+        </span>
+      )
+    }
+    {
+      minStay && (
+        <span class="absolute top-4 left-4 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-medium shadow-md">
+          ab {minStay} {minStay === 1 ? 'Tag' : 'Tage'}
+        </span>
+      )
+    }
+    {
+      (validFrom || validTo) && (
+        <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white px-3 py-2 text-sm">
+          <div>
+            <span class="font-medium">Anreise:</span>
+            {validFrom && validTo
+              ? ` ${validFrom} - ${validTo}`
+              : ` ${validFrom || validTo}`}
+          </div>
+        </div>
+      )
+    }
+  </div>
+
+  <div class="p-5">
+    <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+      {bundle.Title}
+    </h3>
+
+    <div class="h-24 overflow-hidden mb-4">
+      {richTextContent ? (
+        <div class="font-sans rich-text text-gray-600 dark:text-gray-300 text-left break-words hyphens-auto" set:html={richTextContent}></div>
+      ) : (
+        <p class="text-gray-600 dark:text-gray-300 text-left">Keine Beschreibung verfügbar.</p>
+      )}
+    </div>
+
+
+
+    <div class="mt-4">
+      <button
+        class="w-full bg-primary-100 hover:bg-primary-200 text-primary-800 dark:bg-primary-600 dark:hover:bg-primary-700 dark:text-white font-medium py-2 px-4 rounded transition-colors duration-300 shadow-md border border-primary-300 dark:border-primary-700 show-modal-btn"
+        data-modal-id={`bundle-modal-${bundle._uid}`}
+      >
+        Details anzeigen
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Bundle Modal -->
+<BundleModal bundle={bundle} id={`bundle-modal-${bundle._uid}`} />
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Get all show modal buttons
+    const showModalButtons = document.querySelectorAll('.show-modal-btn');
+    
+    // Add click event to each button
+    showModalButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const modalId = button.getAttribute('data-modal-id') || '';
+        if (!modalId) return;
+        
+        const modal = document.getElementById(modalId);
+        if (modal) {
+          // Show modal
+          modal.classList.remove('hidden');
+          document.body.classList.add('overflow-hidden');
+        }
+      });
+    });
+  });
+</script>
+
+<style>
+  .rich-text :global(p) {
+    text-align: left !important;
+    margin-bottom: 0.5rem;
+  }
+  
+  .rich-text :global(strong) {
+    font-weight: 600;
+  }
+  
+  .rich-text :global(em) {
+    font-style: italic;
+  }
+</style>

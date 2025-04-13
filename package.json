@@ -40,6 +40,7 @@
     "cloudinary": "^2.4.0",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
+    "flatpickr": "^4.6.13",
     "flowbite": "^2.4.1",
     "js-yaml": "^4.1.0",
     "marked": "^13.0.3",

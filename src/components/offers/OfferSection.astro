@@ -1,0 +1,67 @@
+---
+/**
+ * OfferSection Component
+ *
+ * This component displays offers in a structured and visually appealing way.
+ * It uses the SectionBlock component as a wrapper for consistent styling.
+ *
+ * Props:
+ * - blok: object - The Storyblok content block containing component data
+ * - centered: boolean - Whether the text should be centered (default: true)
+ * - sectionType: string - Type of section to use for centralized color config (default: 'offers')
+ * - backgroundColorClass: string - Custom background color class (overrides sectionType)
+ */
+
+import SectionBlock from "../Base/SectionBlock.astro";
+import BundleListDisplay from "./BundleListDisplay.astro";
+
+interface Props {
+  blok: {
+    Header: string;
+    Subheader?: string;
+    Kategorie?: string;
+    [key: string]: any;
+  };
+  centered?: boolean;
+  sectionType?: string;
+  backgroundColorClass?: string;
+}
+
+const {
+  blok,
+  centered = true,
+  sectionType = "offers",
+  backgroundColorClass = "bg-gray-50 dark:bg-gray-900",
+} = Astro.props;
+
+// Fetch offers data based on the Kategorie in the blok
+let offersData = { bundles: [], rooms: [], services: [] };
+try {
+  const apiUrl = new URL("/api/ibe/allOffers", Astro.url);
+
+  // Add kategorie parameter if it exists in the blok
+  if (blok.Kategorie) {
+    apiUrl.searchParams.set("kategorie", blok.Kategorie);
+  }
+
+  const response = await fetch(apiUrl.toString());
+  offersData = await response.json();
+} catch (error) {
+  console.error("Error fetching offers:", error);
+}
+---
+
+<SectionBlock
+  header={blok.Header}
+  subHeader={blok.Subheader}
+  centered={centered}
+  sectionType={sectionType}
+  backgroundColorClass={backgroundColorClass}
+>
+  <div class="container mx-auto px-4 py-8">
+    <BundleListDisplay
+      bundles={offersData.bundles}
+      emptyMessage={`Keine Angebote${blok.Kategorie ? ` für ${blok.Kategorie}` : ""} verfügbar`}
+    />
+  </div>
+</SectionBlock>

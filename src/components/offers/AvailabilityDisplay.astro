@@ -1,0 +1,75 @@
+---
+/**
+ * AvailabilityDisplay Component
+ * 
+ * This component displays the room categories available for a bundle.
+ * 
+ * Props:
+ * - categories: string - Comma-separated list of room category codes
+ */
+
+interface Props {
+  categories: string;
+}
+
+const { categories = '' } = Astro.props;
+
+// Parse categories from comma-separated string
+const categoryList = categories
+  .split(',')
+  .filter(category => category.trim().length > 0)
+  .map(category => category.trim());
+
+// Map of category codes to human-readable names
+const categoryNames: Record<string, string> = {
+  'ZBS': 'Zimmer Basic Standard',
+  'DBS': 'Doppelzimmer Basic Standard',
+  'SUS': 'Suite Standard',
+  'WSS': 'Wellness Suite Standard',
+  'ECS': 'Economy Standard',
+  'DES': 'Deluxe Suite',
+  'STA': 'Standard Apartment',
+  'DDS': 'Deluxe Doppelzimmer Standard',
+  'DAS': 'Deluxe Apartment Standard',
+  // Add more mappings as needed
+};
+
+// Get display name for a category code
+const getCategoryName = (code: string): string => {
+  return categoryNames[code] || code;
+};
+---
+
+<div class="availability-display">
+  <h3 class="text-lg font-semibold mb-3 text-gray-800 dark:text-gray-200">Verfügbare Zimmerkategorien</h3>
+  
+  {categoryList.length > 0 ? (
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+      {categoryList.map(category => (
+        <div class="flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+          </svg>
+          <span class="text-gray-700 dark:text-gray-300">{getCategoryName(category)}</span>
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p class="text-gray-500 dark:text-gray-400 italic">Keine Zimmerkategorien angegeben</p>
+  )}
+</div>
+
+<style>
+  .availability-display {
+    background-color: #f9fafb;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 1rem;
+    border: 1px solid #e5e7eb;
+  }
+  
+  :global(.dark) .availability-display {
+    background-color: #1f2937;
+    border-color: #374151;
+  }
+</style>

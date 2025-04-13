@@ -1,0 +1,41 @@
+---
+/**
+ * BundleListDisplay Component
+ * 
+ * This component displays a list of bundles in a responsive grid layout.
+ * 
+ * Props:
+ * - bundles: array - The list of bundle data to display
+ * - emptyMessage: string - Message to display when no bundles are available
+ */
+
+import BundleDisplay from './BundleDisplay.astro';
+
+interface Props {
+  bundles: Array<{
+    _uid: string;
+    Title: string;
+    [key: string]: any;
+  }>;
+  emptyMessage?: string;
+}
+
+const { 
+  bundles = [], 
+  emptyMessage = 'Keine Angebote verfügbar' 
+} = Astro.props;
+---
+
+<div class="bundle-list-container">
+  {bundles.length > 0 ? (
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {bundles.map(bundle => (
+        <BundleDisplay bundle={bundle} />
+      ))}
+    </div>
+  ) : (
+    <div class="text-center py-10">
+      <p class="text-gray-500 dark:text-gray-400 text-lg">{emptyMessage}</p>
+    </div>
+  )}
+</div>

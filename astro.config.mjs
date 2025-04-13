@@ -67,6 +67,7 @@ export default defineConfig({
         zimmerKategorie: "components/Sections/ZimmerKategorie",
         chatBot: "components/chatBotSection",
         komootSection: "components/Sections/KomootSection",
+        offerSection: "components/offers/OfferSection",
       },
       apiOptions: {
         region: "eu",

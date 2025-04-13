@@ -2,7 +2,8 @@ const APALEO_API_URL = "https://api.apaleo.com";
 import { loadEnv } from "vite";
 import { sendBookingConfirmation } from "./email";
 
-async function getApaleoToken() {
+// Export the function so it can be imported by other modules
+export async function getApaleoToken() {
   // Load environment variables using Vite's loadEnv
   // '' is the mode (can be 'development' or 'production')
   // process.cwd() gets the current working directory

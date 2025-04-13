@@ -1,0 +1,301 @@
+---
+/**
+ * FlatpickrDatePicker Component
+ * 
+ * A date picker component using the Flatpickr library.
+ * 
+ * Props:
+ * - id: string - Unique identifier for the date picker
+ * - label: string - Label text for the date picker
+ * - minDate: string - Minimum selectable date (YYYY-MM-DD format)
+ * - maxDate: string - Maximum selectable date (YYYY-MM-DD format)
+ * - initialDate: string - Initial selected date (YYYY-MM-DD format)
+ * - validDates: string[] - Array of valid dates (YYYY-MM-DD format)
+ * - name: string - Name attribute for the input
+ * - required: boolean - Whether the input is required
+ * - placeholder: string - Placeholder text for the input
+ */
+
+interface Props {
+  id: string;
+  label?: string;
+  minDate?: string;
+  maxDate?: string;
+  initialDate?: string;
+  validDates?: string[];
+  name?: string;
+  required?: boolean;
+  placeholder?: string;
+}
+
+const {
+  id,
+  label = "Select Date",
+  minDate,
+  maxDate,
+  initialDate = "",
+  validDates = [],
+  name = "",
+  required = false,
+  placeholder = "TT.MM.JJJJ"
+} = Astro.props;
+---
+
+<div class="flatpickr-date-picker-container">
+  {label && (
+    <label for={id} class="date-picker-label">{label}</label>
+  )}
+  
+  <div class="date-picker-input-container">
+    <input 
+      type="text"
+      id={id}
+      name={name}
+      class="date-picker-input"
+      placeholder={placeholder}
+      value={initialDate}
+      readonly
+      required={required}
+      data-min-date={minDate}
+      data-max-date={maxDate}
+      data-initial-date={initialDate}
+      data-valid-dates={validDates.length > 0 ? JSON.stringify(validDates) : ""}
+    />
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_green.css">
+
+<script is:inline>
+  // Simple date picker using vanilla JavaScript and Flatpickr
+  document.addEventListener('DOMContentLoaded', function() {
+    // Load Flatpickr CSS
+    if (!document.getElementById('flatpickr-css')) {
+      const link = document.createElement('link');
+      link.id = 'flatpickr-css';
+      link.rel = 'stylesheet';
+      link.href = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css';
+      document.head.appendChild(link);
+    }
+    
+    // Load Flatpickr JS and German locale
+    if (typeof flatpickr === 'undefined') {
+      // First load the main flatpickr script
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/flatpickr';
+      script.onload = function() {
+        // Then load the German locale
+        const localeScript = document.createElement('script');
+        localeScript.src = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/de.js';
+        localeScript.onload = initializePickers;
+        document.head.appendChild(localeScript);
+      };
+      document.head.appendChild(script);
+    } else {
+      // Check if German locale is loaded
+      if (typeof flatpickr.l10ns.de === 'undefined') {
+        const localeScript = document.createElement('script');
+        localeScript.src = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/de.js';
+        localeScript.onload = initializePickers;
+        document.head.appendChild(localeScript);
+      } else {
+        initializePickers();
+      }
+    }
+    
+    function initializePickers() {
+      // Store instances for later reference
+      window.datepickerInstances = window.datepickerInstances || {};
+      
+      // Initialize each date picker
+      document.querySelectorAll('.date-picker-input').forEach(function(input) {
+        const id = input.id;
+        const minDate = input.getAttribute('data-min-date');
+        const maxDate = input.getAttribute('data-max-date');
+        const initialDate = input.getAttribute('data-initial-date');
+        
+        console.log('Initializing date picker', id, 'with initial date:', initialDate);
+        
+        // Create a new instance
+        try {
+          const instance = flatpickr(input, {
+            dateFormat: 'd.m.Y',
+            altFormat: 'd.m.Y',
+            altInput: true,
+            locale: flatpickr.l10ns.de,
+            minDate: minDate || undefined,
+            maxDate: maxDate || undefined,
+            defaultDate: initialDate || undefined,
+            disableMobile: true,
+            enableTime: false,
+            time_24hr: false,
+            noCalendar: false,
+            onChange: function(selectedDates, dateStr) {
+              if (selectedDates && selectedDates.length > 0) {
+                const event = new CustomEvent('dateSelected', {
+                  detail: {
+                    date: selectedDates[0],
+                    formattedDate: dateStr,
+                    isoDate: selectedDates[0].toISOString().split('T')[0]
+                  },
+                  bubbles: true
+                });
+                input.dispatchEvent(event);
+              }
+            }
+          });
+          
+          // Store the instance
+          window.datepickerInstances[id] = instance;
+        } catch (error) {
+          console.error('Error initializing date picker:', error);
+        }
+      });
+    }
+    
+    // Global method to update date picker settings
+    window.updateDatePicker = function(id, options) {
+      // Instead of trying to update an existing instance, destroy and recreate
+      try {
+        const input = document.getElementById(id);
+        if (!input) return;
+        
+        // Get the current instance
+        const instance = window.datepickerInstances[id];
+        if (instance) {
+          // Destroy the current instance
+          instance.destroy();
+        }
+        
+        // Update data attributes with new values
+        if (options.minDate) {
+          input.setAttribute('data-min-date', options.minDate);
+        }
+        if (options.maxDate) {
+          input.setAttribute('data-max-date', options.maxDate);
+        }
+        
+        // Create a new instance with updated settings
+        const newInstance = flatpickr(input, {
+          dateFormat: 'd.m.Y',
+          altFormat: 'd.m.Y',
+          altInput: true,
+          locale: flatpickr.l10ns.de,
+          minDate: options.minDate || input.getAttribute('data-min-date') || undefined,
+          maxDate: options.maxDate || input.getAttribute('data-max-date') || undefined,
+          disableMobile: true,
+          enableTime: false,
+          time_24hr: false,
+          noCalendar: false,
+          onChange: function(selectedDates, dateStr) {
+            if (selectedDates && selectedDates.length > 0) {
+              const event = new CustomEvent('dateSelected', {
+                detail: {
+                  date: selectedDates[0],
+                  formattedDate: dateStr,
+                  isoDate: selectedDates[0].toISOString().split('T')[0]
+                },
+                bubbles: true
+              });
+              input.dispatchEvent(event);
+            }
+          }
+        });
+        
+        // Store the new instance
+        window.datepickerInstances[id] = newInstance;
+      } catch (error) {
+        console.error('Error updating date picker:', error);
+      }
+    };
+  });
+</script>
+
+<style>
+  /* Base container */
+  .flatpickr-date-picker-container {
+    position: relative;
+    width: 100%;
+    font-family: system-ui, -apple-system, sans-serif;
+  }
+  
+  /* Label styling */
+  .date-picker-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #4b5563;
+  }
+  
+  /* Input container */
+  .date-picker-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Input styling */
+  .date-picker-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    color: #1f2937;
+    background-color: #fff;
+    cursor: pointer;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  }
+  
+  /* Flatpickr specific overrides */
+  :global(.flatpickr-calendar) {
+    font-size: 0.75rem;
+  }
+  
+  :global(.flatpickr-day) {
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+  
+  :global(.flatpickr-monthDropdown-months) {
+    font-size: 0.8rem;
+  }
+  
+  :global(.flatpickr-current-month .numInputWrapper) {
+    font-size: 0.8rem;
+  }
+  
+  .date-picker-input:hover {
+    border-color: #9ca3af;
+  }
+  
+  .date-picker-input:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+  }
+  
+  /* Dark mode support */
+  @media (prefers-color-scheme: dark) {
+    .date-picker-label {
+      color: #e5e7eb;
+    }
+    
+    .date-picker-input {
+      background-color: #1f2937;
+      border-color: #4b5563;
+      color: #f3f4f6;
+    }
+    
+    .date-picker-input:hover {
+      border-color: #6b7280;
+    }
+    
+    .date-picker-input:focus {
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+    }
+  }
+</style>

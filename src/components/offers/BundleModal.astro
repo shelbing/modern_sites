@@ -1,0 +1,869 @@
+---
+/**
+ * BundleModal Component
+ * 
+ * This component displays a modal with detailed information about a bundle offer.
+ * It includes the bundle title, description, price, and availability.
+ */
+
+import { renderRichText } from '@storyblok/astro';
+import SimpleDatePicker from "../UI/SimpleDatePicker.astro";
+import RichText from "../Base/RichText.astro";
+import AvailabilityDisplay from "./AvailabilityDisplay.astro";
+
+interface Props {
+  bundle: {
+    _uid: string;
+    Title: string;
+    Beschreibung?: any;
+    TeaserImage?: {
+      filename?: string;
+      alt?: string;
+    };
+    Kategorie?: string;
+    AnreiseVon?: string;
+    AnreiseBis?: string;
+    BundleCode?: string;
+    Mindestaufenthalt?: string | number;
+    Categories?: string;
+    Basisrate?: string;
+    [key: string]: any;
+  };
+  id: string;
+}
+
+const { bundle, id } = Astro.props;
+
+// Format date if available
+const formatDate = (dateString: string | undefined) => {
+  if (!dateString) return "";
+  try {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat("de-DE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(date);
+  } catch (e) {
+    return dateString;
+  }
+};
+
+// Process rich text content using Storyblok's renderRichText
+let richTextContent = "";
+if (bundle.Beschreibung) {
+  try {
+    // Handle different possible structures of the Beschreibung field
+    if (typeof bundle.Beschreibung === 'object') {
+      // If it's already a rich text object, use renderRichText
+      if (bundle.Beschreibung.content || bundle.Beschreibung.type === 'doc') {
+        richTextContent = renderRichText(bundle.Beschreibung);
+      } 
+      // If it's an array of content blocks
+      else if (Array.isArray(bundle.Beschreibung)) {
+        // Create a valid rich text structure
+        const richTextObj = {
+          type: 'doc',
+          content: bundle.Beschreibung
+        };
+        richTextContent = renderRichText(richTextObj);
+      }
+      // If it has a nested content structure
+      else if (bundle.Beschreibung.richtext) {
+        richTextContent = renderRichText(bundle.Beschreibung.richtext);
+      }
+      // Fallback for other object structures
+      else {
+        console.log('Unknown rich text structure:', bundle.Beschreibung);
+        // Try to convert to string if possible
+        richTextContent = JSON.stringify(bundle.Beschreibung);
+      }
+    } 
+    // If it's a string, use it directly
+    else if (typeof bundle.Beschreibung === 'string') {
+      richTextContent = bundle.Beschreibung;
+    }
+  } catch (error) {
+    console.error('Error rendering rich text:', error);
+    // Provide a fallback in case of error
+    richTextContent = typeof bundle.Beschreibung === 'string' 
+      ? bundle.Beschreibung 
+      : 'Fehler beim Anzeigen der Beschreibung.';
+  }
+}
+
+const validFrom = formatDate(bundle.AnreiseVon);
+const validTo = formatDate(bundle.AnreiseBis);
+
+// Process minimum stay if available
+let minStay = null;
+if (bundle.Mindestaufenthalt) {
+  // Convert to number if it's a string
+  const stayValue = typeof bundle.Mindestaufenthalt === 'string' 
+    ? parseInt(bundle.Mindestaufenthalt, 10) 
+    : bundle.Mindestaufenthalt;
+  
+  // Only use valid numbers
+  if (!isNaN(stayValue) && stayValue > 0) {
+    minStay = stayValue;
+  }
+}
+
+const imageUrl = bundle.TeaserImage?.filename || "/images/placeholder.jpg";
+---
+
+<!-- Modal backdrop -->
+<div id={id} class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
+  <!-- Modal container -->
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-2/3 h-2/3 max-h-[80vh] flex flex-col overflow-hidden">
+    <!-- Modal header -->
+    <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-white text-left">{bundle.Title}</h2>
+      <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none modal-close">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    
+    <!-- Modal content -->
+    <div class="flex-1 overflow-y-auto p-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <!-- Image section -->
+        <div class="relative">
+          <img 
+            src={imageUrl} 
+            alt={bundle.TeaserImage?.alt || bundle.Title} 
+            class="w-full h-auto rounded-lg object-cover"
+          />
+          {bundle.Kategorie && (
+            <span class="absolute top-4 right-4 bg-white text-primary-600 px-3 py-1 rounded-full text-xs font-medium shadow-md">
+              {bundle.Kategorie}
+            </span>
+          )}
+          {minStay && (
+            <span class="absolute top-4 left-4 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-medium shadow-md">
+              ab {minStay} {minStay === 1 ? 'Tag' : 'Tage'}
+            </span>
+          )}
+          {(validFrom || validTo) && (
+            <div class="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white px-3 py-2 text-sm">
+              <span class="font-medium">Anreise:</span>
+              {validFrom && validTo
+                ? ` ${validFrom} - ${validTo}`
+                : ` ${validFrom || validTo}`}
+            </div>
+          )}
+        </div>
+        
+        <!-- Details section -->
+        <div class="text-left">
+          
+          <div class="rich-text-container text-left">
+            {richTextContent ? (
+              <div class="font-sans rich-text text-gray-700 dark:text-gray-300 text-left" set:html={richTextContent}></div>
+            ) : (
+              <p class="text-gray-600 dark:text-gray-400 text-left">Keine Beschreibung verfügbar.</p>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      <!-- Availability Display (Full Width) -->
+      {bundle.Categories && (
+        <div class="w-full p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 text-left">
+          <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200 text-left">Verfügbare Zimmerkategorien</h3>
+          <p class="text-gray-700 dark:text-gray-300 text-left">{bundle.Categories}</p>
+          
+          <!-- Availability data will be displayed here -->
+          <div id={`availability-container-${id}`} class="mt-4 hidden">
+            <div class="flex justify-between items-center mb-2">
+              <h4 class="font-medium text-gray-800 dark:text-gray-200">Verfügbarkeitsübersicht</h4>
+              <span id={`total-availability-${id}`} class="text-green-600 dark:text-green-400 font-medium"></span>
+            </div>
+            
+            <!-- Date range calendar picker with Flatpickr component -->
+            <div class="mb-4 border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
+              <div class="flex flex-col space-y-2">
+                <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Zeitraum auswählen:</div>
+                <div class="flex flex-wrap items-center gap-3">
+                  <div class="flex-1">
+                    <SimpleDatePicker
+                      id={`date-from-${id}`}
+                      label="Von:"
+                      name="dateFrom"
+                      initialDate={bundle.AnreiseVon}
+                      minDate={bundle.AnreiseVon}
+                      maxDate={bundle.AnreiseBis}
+                      required={true}
+                    />
+                  </div>
+                  <div class="flex-1">
+                    <SimpleDatePicker
+                      id={`date-to-${id}`}
+                      label="Bis:"
+                      name="dateTo"
+                      initialDate={bundle.AnreiseBis}
+                      minDate={bundle.AnreiseVon}
+                      maxDate={bundle.AnreiseBis}
+                      required={true}
+                    />
+                  </div>
+                  <div class="flex gap-2 mt-4">
+                    <button 
+                      id={`date-filter-apply-${id}`}
+                      class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded px-3 py-1"
+                    >
+                      Anwenden
+                    </button>
+                    <button 
+                      id={`date-filter-reset-${id}`}
+                      class="bg-gray-300 hover:bg-gray-400 text-gray-800 text-sm font-medium rounded px-3 py-1"
+                    >
+                      Zurücksetzen
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div id={`availability-dates-${id}`} class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-2">
+              <!-- Availability data will be inserted here by JavaScript -->
+            </div>
+          </div>
+          
+          <!-- Loading indicator -->
+          <div id={`availability-loading-${id}`} class="mt-4">
+            <p class="text-gray-500 dark:text-gray-400 text-center italic">Verfügbarkeit wird geprüft...</p>
+          </div>
+        </div>
+      )}
+    </div>
+    
+    <!-- Modal footer -->
+    <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+      <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded modal-close">
+        Schließen
+      </button>
+      <button class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded shadow-md">
+        Buchen
+      </button>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ id: id, bundle: bundle }}>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById(id);
+    
+    // Function to check room availability
+    async function checkRoomAvailability() {
+      if (bundle.Categories) {
+        try {
+          // Show loading indicator
+          const loadingElement = document.getElementById(`availability-loading-${id}`);
+          const availabilityContainer = document.getElementById(`availability-container-${id}`);
+          
+          if (loadingElement) loadingElement.classList.remove('hidden');
+          if (availabilityContainer) availabilityContainer.classList.add('hidden');
+          
+          const apiUrl = new URL('/api/ibe/roomsAvailability', window.location.origin);
+          
+          // Add parameters to the API request
+          apiUrl.searchParams.set('categories', bundle.Categories);
+          
+          // Add arrival date parameters if available
+          if (bundle.AnreiseVon) {
+            apiUrl.searchParams.set('anreiseVon', bundle.AnreiseVon);
+          }
+          
+          if (bundle.AnreiseBis) {
+            apiUrl.searchParams.set('anreiseBis', bundle.AnreiseBis);
+          }
+          
+          // Add Basisrate parameter if available
+          if (bundle.Basisrate) {
+            apiUrl.searchParams.set('ratePlan', bundle.Basisrate);
+          }
+          
+          const response = await fetch(apiUrl.toString());
+          const data = await response.json();
+          
+          console.log('Room availability data:', data);
+          
+          // Process and display the availability data
+          if (data.success && data.availability && data.availability.length > 0) {
+            displayAvailabilityData(data.availability);
+          } else {
+            // Hide loading indicator and show no data message
+            if (loadingElement) {
+              loadingElement.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center italic">Keine Verfügbarkeitsdaten verfügbar</p>';
+            }
+          }
+        } catch (error) {
+          console.error('Error checking room availability:', error);
+          // Show error message
+          const loadingElement = document.getElementById(`availability-loading-${id}`);
+          if (loadingElement) {
+            loadingElement.innerHTML = '<p class="text-red-500 dark:text-red-400 text-center italic">Fehler beim Abrufen der Verfügbarkeit</p>';
+          }
+        }
+      }
+    }
+    
+    // Store the availability data globally for filtering
+    let globalAvailabilityData = [];
+    
+    // Function to display availability data
+    function displayAvailabilityData(availabilityData) {
+      const availabilityContainer = document.getElementById(`availability-container-${id}`);
+      const loadingElement = document.getElementById(`availability-loading-${id}`);
+      const datesContainer = document.getElementById(`availability-dates-${id}`);
+      const totalAvailabilityElement = document.getElementById(`total-availability-${id}`);
+      const dateFilterSelect = document.getElementById(`date-filter-${id}`);
+      
+      if (!availabilityContainer || !datesContainer) return;
+      
+      // Store the data globally for filtering
+      globalAvailabilityData = availabilityData;
+      
+      // Hide loading indicator and show availability container
+      if (loadingElement) loadingElement.classList.add('hidden');
+      availabilityContainer.classList.remove('hidden');
+      
+      // Clear previous content
+      datesContainer.innerHTML = '';
+      
+      // Get the category codes from the bundle
+      const categoryCodes = bundle.Categories.split(',').map(cat => cat.trim());
+      
+      // Sort availability data by date
+      availabilityData.sort((a, b) => new Date(a.date) - new Date(b.date));
+      
+      // Calculate total availability across all dates
+      const totalAvailability = availabilityData.reduce((sum, dateEntry) => sum + dateEntry.totalSellableCount, 0);
+      
+      // Display total availability
+      if (totalAvailabilityElement) {
+        totalAvailabilityElement.textContent = `${totalAvailability} Zimmer verfügbar`;
+      }
+      
+      // Set up date range calendar with Flatpickr date pickers
+      const dateFromInput = document.getElementById(`date-from-${id}`);
+      const dateToInput = document.getElementById(`date-to-${id}`);
+      const applyButton = document.getElementById(`date-filter-apply-${id}`);
+      const resetButton = document.getElementById(`date-filter-reset-${id}`);
+      
+      if (dateFromInput && dateToInput && applyButton && resetButton) {
+        // Get AnreiseVon and AnreiseBis dates from the bundle
+        let bundleStartDate = null;
+        let bundleEndDate = null;
+        
+        if (bundle.AnreiseVon) {
+          bundleStartDate = new Date(bundle.AnreiseVon);
+        }
+        
+        if (bundle.AnreiseBis) {
+          bundleEndDate = new Date(bundle.AnreiseBis);
+        }
+        
+        // Find min and max dates in the availability data
+        let minDate = null;
+        let maxDate = null;
+        
+        // Create an array of valid dates (within AnreiseVon to AnreiseBis range)
+        const validDates = [];
+        
+        availabilityData.forEach(dateEntry => {
+          const currentDate = new Date(dateEntry.date);
+          
+          // Check if this date is within bundle's arrival range
+          let isValidDate = true;
+          if (bundleStartDate && bundleEndDate) {
+            isValidDate = currentDate >= bundleStartDate && currentDate <= bundleEndDate;
+          }
+          
+          if (isValidDate) {
+            validDates.push(dateEntry.date);
+          }
+          
+          // Still track min/max for overall range
+          if (!minDate || currentDate < minDate) {
+            minDate = currentDate;
+          }
+          if (!maxDate || currentDate > maxDate) {
+            maxDate = currentDate;
+          }
+        });
+        
+        // Format dates for input fields (YYYY-MM-DD)
+        const formatDateForInput = (date) => {
+          if (!date) return null;
+          
+          // If date is a string with time component (e.g., "2025-12-22 00:00"), remove the time part
+          if (typeof date === 'string' && date.includes(' ')) {
+            return date.split(' ')[0];
+          }
+          
+          // If it's a Date object, convert to ISO and take only the date part
+          if (date instanceof Date) {
+            return date.toISOString().split('T')[0];
+          }
+          
+          // If it's already in the correct format, return as is
+          return date;
+        };
+        
+        // Store valid dates for filtering
+        window.validDatesForModal = window.validDatesForModal || {};
+        window.validDatesForModal[id] = validDates;
+        
+        // Find the earliest available date in the data
+        let earliestAvailableDate = null;
+        if (validDates.length > 0) {
+          // Sort the valid dates to find the earliest
+          const sortedDates = [...validDates].sort((a, b) => new Date(a) - new Date(b));
+          earliestAvailableDate = new Date(sortedDates[0]);
+        } else if (minDate) {
+          earliestAvailableDate = new Date(minDate);
+        } else if (bundle.AnreiseVon) {
+          earliestAvailableDate = new Date(bundle.AnreiseVon);
+        }
+        
+        // Calculate departure date (arrival date + 3 days minimum stay)
+        let departureDate = null;
+        if (earliestAvailableDate) {
+          departureDate = new Date(earliestAvailableDate);
+          departureDate.setDate(departureDate.getDate() + 3); // Add 3 days for minimum stay
+          
+          // Make sure departure date is not after the max date
+          if (maxDate && departureDate > maxDate) {
+            departureDate = new Date(maxDate);
+          }
+          
+          // Make sure departure date is not after bundle end date
+          if (bundle.AnreiseBis && departureDate > new Date(bundle.AnreiseBis)) {
+            departureDate = new Date(bundle.AnreiseBis);
+          }
+        }
+        
+        // Store selected dates
+        let selectedFromDate = earliestAvailableDate ? formatDateForInput(earliestAvailableDate) : 
+                              (bundle.AnreiseVon || (minDate ? formatDateForInput(minDate) : null));
+        let selectedToDate = departureDate ? formatDateForInput(departureDate) : 
+                            (bundle.AnreiseBis || (maxDate ? formatDateForInput(maxDate) : null));
+                            
+        // Set the initial values for the date inputs
+        if (selectedFromDate) {
+          const dateFromInput = document.getElementById(`date-from-${id}`);
+          if (dateFromInput) dateFromInput.value = selectedFromDate;
+        }
+        
+        if (selectedToDate) {
+          const dateToInput = document.getElementById(`date-to-${id}`);
+          if (dateToInput) dateToInput.value = selectedToDate;
+        }
+        
+        // Listen for date selection events
+        dateFromInput.addEventListener('dateSelected', function(e) {
+          selectedFromDate = e.detail.isoDate;
+          // Update the to date min if needed
+          if (dateToInput) {
+            dateToInput.min = selectedFromDate;
+            
+            // If to date is before from date, update it
+            if (new Date(dateToInput.value) < new Date(selectedFromDate)) {
+              // Set to date to from date + 3 days (minimum stay)
+              const newToDate = new Date(selectedFromDate);
+              newToDate.setDate(newToDate.getDate() + 3);
+              dateToInput.value = formatDateForInput(newToDate);
+              selectedToDate = formatDateForInput(newToDate);
+            }
+          }
+        });
+        
+        dateToInput.addEventListener('dateSelected', function(e) {
+          selectedToDate = e.detail.isoDate;
+          // No need to update the from date max as the HTML input handles this
+        });
+        
+        // Add event listeners for the apply and reset buttons
+        applyButton.addEventListener('click', function() {
+          if (selectedFromDate && selectedToDate) {
+            filterAvailabilityByDateRange(selectedFromDate, selectedToDate);
+          }
+        });
+        
+        resetButton.addEventListener('click', function() {
+          if (minDate && maxDate) {
+            // Reset to the full date range
+            const minDateStr = formatDateForInput(minDate);
+            const maxDateStr = formatDateForInput(maxDate);
+            
+            // Update the date pickers
+            if (window.updateDatePicker) {
+              window.updateDatePicker(`date-from-${id}`, { 
+                minDate: bundle.AnreiseVon || minDateStr,
+                maxDate: bundle.AnreiseBis || maxDateStr,
+                validDates: validDates
+              });
+              
+              window.updateDatePicker(`date-to-${id}`, { 
+                minDate: bundle.AnreiseVon || minDateStr,
+                maxDate: bundle.AnreiseBis || maxDateStr,
+                validDates: validDates
+              });
+            }
+            
+            // Reset selected dates
+            selectedFromDate = bundle.AnreiseVon || minDateStr;
+            selectedToDate = bundle.AnreiseBis || maxDateStr;
+            
+            // Filter with the full date range
+            filterAvailabilityByDateRange(selectedFromDate, selectedToDate);
+          }
+        });
+        
+        // Update date pickers with the calculated initial dates
+        if (window.updateDatePicker) {
+          if (selectedFromDate) {
+            window.updateDatePicker(`date-from-${id}`, { 
+              defaultDate: selectedFromDate,
+              minDate: bundle.AnreiseVon || (minDate ? formatDateForInput(minDate) : null),
+              maxDate: bundle.AnreiseBis || (maxDate ? formatDateForInput(maxDate) : null)
+            });
+          }
+          
+          if (selectedToDate) {
+            window.updateDatePicker(`date-to-${id}`, { 
+              defaultDate: selectedToDate,
+              minDate: selectedFromDate, // Ensure departure date is after arrival
+              maxDate: bundle.AnreiseBis || (maxDate ? formatDateForInput(maxDate) : null)
+            });
+          }
+        }
+        
+        // Set up initial filter with the selected date range
+        if (selectedFromDate && selectedToDate) {
+          // Initial filter with the selected date range
+          setTimeout(() => {
+            filterAvailabilityByDateRange(selectedFromDate, selectedToDate);
+          }, 500);
+        } else if (minDate && maxDate) {
+          const minDateStr = formatDateForInput(minDate);
+          const maxDateStr = formatDateForInput(maxDate);
+          
+          // Initial filter with the full date range as fallback
+          setTimeout(() => {
+            filterAvailabilityByDateRange(minDateStr, maxDateStr);
+          }, 500);
+        }
+      }
+      
+      // We'll display dates after the date pickers are initialized
+      // The initial filter will be applied by the date picker initialization
+    }
+    
+    // Function to filter availability data by date range
+    function filterAvailabilityByDateRange(fromDate, toDate) {
+      const datesContainer = document.getElementById(`availability-dates-${id}`);
+      const totalAvailabilityElement = document.getElementById(`total-availability-${id}`);
+      
+      if (!datesContainer) return;
+      
+      // Clear previous content
+      datesContainer.innerHTML = '';
+      
+      // Get the category codes from the bundle
+      const categoryCodes = bundle.Categories.split(',').map(cat => cat.trim());
+      
+      // Convert input dates to Date objects
+      const fromDateObj = new Date(fromDate);
+      const toDateObj = new Date(toDate);
+      
+      // Set time to midnight to ensure proper comparison
+      fromDateObj.setHours(0, 0, 0, 0);
+      toDateObj.setHours(23, 59, 59, 999);
+      
+      // Filter the data based on the date range
+      const filteredData = globalAvailabilityData.filter(entry => {
+        const entryDate = new Date(entry.date);
+        entryDate.setHours(0, 0, 0, 0);
+        return entryDate >= fromDateObj && entryDate <= toDateObj;
+      });
+      
+      // Calculate total availability for filtered data
+      const totalAvailability = filteredData.reduce((sum, dateEntry) => sum + dateEntry.totalSellableCount, 0);
+      
+      // Update total availability display
+      if (totalAvailabilityElement) {
+        totalAvailabilityElement.textContent = `${totalAvailability} Zimmer verfügbar`;
+      }
+      
+      // Render the filtered cards
+      renderAvailabilityCards(filteredData, categoryCodes, datesContainer);
+    }
+    
+    // Function to render availability cards
+    function renderAvailabilityCards(data, categoryCodes, container) {
+      // Create a card for each date with availability information
+      data.forEach(dateEntry => {
+        // Format the date for display
+        const dateObj = new Date(dateEntry.date);
+        const formattedDate = dateObj.toLocaleDateString('de-DE', {
+          weekday: 'short',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+        
+        // Create a card for this date
+        const dateCard = document.createElement('div');
+        dateCard.className = 'bg-white dark:bg-gray-700 rounded-lg shadow-sm p-3 border border-gray-200 dark:border-gray-600';
+        dateCard.dataset.date = dateEntry.date; // Store the date for filtering
+        
+        // Create date header
+        const dateHeader = document.createElement('div');
+        dateHeader.className = 'font-medium text-gray-800 dark:text-gray-200 mb-2';
+        dateHeader.textContent = formattedDate;
+        
+        // Create availability count
+        const availabilityCount = document.createElement('div');
+        availabilityCount.className = 'text-green-600 dark:text-green-400 font-medium text-lg';
+        availabilityCount.textContent = `${dateEntry.totalSellableCount} verfügbar`;
+        
+        // Create unit groups list
+        const unitGroupsList = document.createElement('div');
+        unitGroupsList.className = 'mt-2 text-sm';
+        
+        // Filter unit groups to only include those in the bundle's categories
+        const relevantUnitGroups = dateEntry.unitGroups.filter(group => 
+          categoryCodes.includes(group.code));
+        
+        // Add each unit group
+        relevantUnitGroups.forEach(group => {
+          const unitGroupItem = document.createElement('div');
+          unitGroupItem.className = 'flex justify-between items-center text-gray-600 dark:text-gray-300';
+          
+          const unitGroupName = document.createElement('span');
+          unitGroupName.textContent = group.code;
+          
+          const unitGroupCount = document.createElement('span');
+          unitGroupCount.className = group.sellableCount > 0 ? 'text-green-500' : 'text-red-500';
+          unitGroupCount.textContent = group.sellableCount;
+          
+          unitGroupItem.appendChild(unitGroupName);
+          unitGroupItem.appendChild(unitGroupCount);
+          unitGroupsList.appendChild(unitGroupItem);
+        });
+        
+        // Assemble the card
+        dateCard.appendChild(dateHeader);
+        dateCard.appendChild(availabilityCount);
+        dateCard.appendChild(unitGroupsList);
+        
+        // Add the card to the container
+        container.appendChild(dateCard);
+      });
+    }
+    
+    // Function to handle modal opening
+    function handleModalOpen() {
+      if (!modal.classList.contains('hidden')) {
+        checkRoomAvailability();
+      }
+    }
+    
+    // Add a MutationObserver to detect when the modal becomes visible
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class' && !modal.classList.contains('hidden')) {
+          checkRoomAvailability();
+        }
+      });
+    });
+    
+    observer.observe(modal, { attributes: true });
+    
+    // Close modal when clicking on close buttons
+    const closeButtons = modal.querySelectorAll('.modal-close');
+    closeButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+      });
+    });
+    
+    // Close modal when clicking outside of it
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) {
+        modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+      }
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+        modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+      }
+    });
+  });
+</script>
+
+<style>
+  /* Base paragraph styling */
+  .rich-text :global(p) {
+    margin-bottom: 1.5rem !important;
+    line-height: 1.6;
+    text-align: left;
+  }
+  
+  .rich-text :global(p:last-child) {
+    margin-bottom: 0;
+  }
+  
+  /* Date picker styling */
+  .date-picker {
+    position: relative;
+  }
+  
+  /* Text formatting */
+  .rich-text :global(strong), .rich-text :global(b) {
+    font-weight: 600;
+  }
+  
+  .rich-text :global(em), .rich-text :global(i) {
+    font-style: italic;
+  }
+  
+  /* Lists */
+  .rich-text :global(ul), .rich-text :global(ol) {
+    margin-bottom: 1.5rem !important;
+    padding-left: 1.5rem;
+    list-style-position: outside;
+  }
+  
+  .rich-text :global(ul) {
+    list-style-type: disc;
+  }
+  
+  .rich-text :global(ol) {
+    list-style-type: decimal;
+  }
+  
+  .rich-text :global(li) {
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+  }
+  
+  .rich-text :global(li:last-child) {
+    margin-bottom: 0;
+  }
+  
+  /* Headings */
+  .rich-text :global(h1), .rich-text :global(h2), .rich-text :global(h3),
+  .rich-text :global(h4), .rich-text :global(h5), .rich-text :global(h6) {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: inherit;
+  }
+  
+  .rich-text :global(h1) { font-size: 1.75rem; }
+  .rich-text :global(h2) { font-size: 1.5rem; }
+  .rich-text :global(h3) { font-size: 1.25rem; }
+  .rich-text :global(h4) { font-size: 1.125rem; }
+  .rich-text :global(h5), .rich-text :global(h6) { font-size: 1rem; }
+  
+  /* Links */
+  .rich-text :global(a) {
+    color: #4f46e5; /* indigo-600 */
+    text-decoration: underline;
+    transition: color 0.2s ease;
+  }
+  
+  .rich-text :global(a:hover) {
+    color: #4338ca; /* indigo-700 */
+  }
+  
+  /* Container */
+  .rich-text-container {
+    margin-bottom: 1.5rem;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+  }
+  
+  /* Blockquotes */
+  .rich-text :global(blockquote) {
+    margin: 1.5rem 0;
+    padding: 0.5rem 0 0.5rem 1.5rem;
+    border-left: 4px solid #e5e7eb; /* gray-200 */
+    font-style: italic;
+  }
+  
+  /* Code blocks */
+  .rich-text :global(pre), .rich-text :global(code) {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.9em;
+    background-color: #f3f4f6; /* gray-100 */
+    border-radius: 0.25rem;
+  }
+  
+  .rich-text :global(pre) {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    overflow-x: auto;
+  }
+  
+  .rich-text :global(code) {
+    padding: 0.2rem 0.4rem;
+  }
+  
+  /* Tables */
+  .rich-text :global(table) {
+    width: 100%;
+    margin: 1.5rem 0;
+    border-collapse: collapse;
+  }
+  
+  .rich-text :global(th), .rich-text :global(td) {
+    padding: 0.5rem;
+    border: 1px solid #e5e7eb; /* gray-200 */
+    text-align: left;
+  }
+  
+  .rich-text :global(th) {
+    background-color: #f9fafb; /* gray-50 */
+    font-weight: 600;
+  }
+  
+  /* Dark mode adjustments */
+  @media (prefers-color-scheme: dark) {
+    .rich-text :global(blockquote) {
+      border-left-color: #4b5563; /* gray-600 */
+    }
+    
+    .rich-text :global(pre), .rich-text :global(code) {
+      background-color: #1f2937; /* gray-800 */
+    }
+    
+    .rich-text :global(th), .rich-text :global(td) {
+      border-color: #4b5563; /* gray-600 */
+    }
+    
+    .rich-text :global(th) {
+      background-color: #374151; /* gray-700 */
+    }
+    
+    .rich-text :global(a) {
+      color: #818cf8; /* indigo-400 */
+    }
+    
+    .rich-text :global(a:hover) {
+      color: #a5b4fc; /* indigo-300 */
+    }
+  }
+</style>
