@@ -22,8 +22,7 @@
     onMount(async () => {
         if ($stripeStore.payment_provider === "stripe") {
             // Use the public key from the environment variable
-            const stripeKey =
-                "pk_test_51MkRN4F6ZfNwOSxOD08SV6OimeGXYM2EFifcXGHYzEaGVwtYXuGZe8Zch708dKGCZbCUMZ2Q31XkUBdHKk21xkwb007M2E8Pnt";
+            const stripeKey = import.meta.env.PUBLIC_STRIPE_KEY;
             console.log("Initializing Stripe with key:", stripeKey);
             stripe = await loadStripe(stripeKey);
 
