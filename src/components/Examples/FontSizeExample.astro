@@ -1,0 +1,110 @@
+---
+/**
+ * FontSizeExample.astro
+ * 
+ * This component demonstrates how to use the centralized font size system.
+ * It showcases different ways to apply font sizes using CSS variables,
+ * Tailwind classes, and inline styles with JavaScript.
+ */
+import fontSizes from '../../config/fontSizes.js';
+import { getCssFontSize } from '../../utils/fontSizeUtils.js';
+
+// Get some font sizes for dynamic usage with proper type checking
+// Define type interface to match the fontSizes structure
+interface FontSizes {
+  h1?: string;
+  h2?: string;
+  h3?: string;
+  h4?: string;
+  h5?: string;
+  h6?: string;
+  body?: {
+    xs?: string;
+    sm?: string;
+    base?: string;
+    lg?: string;
+    xl?: string;
+  };
+  price?: string;
+}
+
+// Type-cast fontSizes to our interface
+const typedFontSizes = fontSizes as FontSizes;
+
+// Safely access properties with fallbacks
+const h1Size = typedFontSizes.h1 || '2.5rem';
+const bodyBaseSize = typedFontSizes.body?.base || '1rem';
+const priceSize = typedFontSizes.price || typedFontSizes.body?.lg || '1.125rem';
+
+// Get CSS variable references
+const h2CssVar = getCssFontSize('h2');
+const bodySm = getCssFontSize('body.sm');
+---
+
+<div class="font-size-example p-6 bg-background-light dark:bg-background-dark rounded-lg shadow-md">
+  <h2 class="mb-4">Font Size System Examples</h2>
+  
+  <div class="example-section mb-6">
+    <h3 class="mb-2">Using CSS Variables</h3>
+    <p class="css-h1">This text uses var(--font-size-h1)</p>
+    <p class="css-body-base">This text uses var(--font-size-body-base)</p>
+    <p class="css-price">This text uses var(--font-size-price)</p>
+  </div>
+  
+  <div class="example-section mb-6">
+    <h3 class="mb-2">Using Tailwind Classes</h3>
+    <p class="text-h1">This text uses text-h1 Tailwind class</p>
+    <p class="text-body-base">This text uses text-body-base Tailwind class</p>
+    <p class="text-price">This text uses text-price Tailwind class</p>
+  </div>
+  
+  <div class="example-section mb-6">
+    <h3 class="mb-2">Using JavaScript Variables</h3>
+    <p style={`font-size: ${h1Size};`}>This text uses getFontSize('h1')</p>
+    <p style={`font-size: ${bodyBaseSize};`}>This text uses getFontSize('body.base')</p>
+    <p style={`font-size: ${priceSize};`}>This text uses getFontSize('price')</p>
+  </div>
+  
+  <div class="example-section">
+    <h3 class="mb-2">Using getCssFontSize Utility</h3>
+    <p style={`font-size: ${h2CssVar};`}>This text uses getCssFontSize('h2')</p>
+    <p style={`font-size: ${bodySm};`}>This text uses getCssFontSize('body.sm')</p>
+  </div>
+</div>
+
+<style>
+  /* Example using CSS variables */
+  .css-h1 {
+    font-size: var(--font-size-h1);
+  }
+  
+  .css-body-base {
+    font-size: var(--font-size-body-base);
+  }
+  
+  .css-price {
+    font-size: var(--font-size-price);
+  }
+  
+  /* Styling for the example component */
+  .font-size-example {
+    border: 1px solid #ddd;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .example-section {
+    padding: 1rem;
+    border-bottom: 1px solid #eee;
+  }
+  
+  .example-section:last-child {
+    border-bottom: none;
+  }
+  
+  h3 {
+    color: var(--color-primary);
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.5rem;
+  }
+</style>

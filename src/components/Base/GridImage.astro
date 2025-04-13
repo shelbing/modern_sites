@@ -1,0 +1,36 @@
+---
+import CloudinaryImage from "./CloudinaryImage.astro"
+import colors from "../../config/colors.js"
+
+// Added link prop to support clickable images
+const {rows, cols, path, alt, caption, link} = Astro.props
+
+const width = (cols * 400).toString()
+const height = (rows * 400).toString()
+
+// Get color classes for the caption
+const captionClasses = `${colors['pictureGallery-caption-bg']} ${colors['pictureGallery-caption-text']}`
+---
+<div class={`row-span-${rows} col-span-${cols} relative`}>
+    {link ? (
+        <a href={link} target={link.startsWith('http') ? '_blank' : '_self'} rel={link.startsWith('http') ? 'noopener noreferrer' : ''} class="block w-full h-full">
+            <CloudinaryImage transformMode="c_fill" width={width} height={height} class="hover:scale-105 transition-transform duration-300 ease-in-out w-full h-full object-cover rounded-lg" alt={alt} imageId={path}/>
+            
+            {caption && (
+                <div class={`absolute bottom-4 left-4 ${captionClasses} px-3 py-1 rounded-md font-medium shadow-md border border-${colors.pictureGallery.caption.borderColor} dark:border-${colors.pictureGallery.caption.darkModeBorder}`}>
+                    {caption}
+                </div>
+            )}
+        </a>
+    ) : (
+        <>
+            <CloudinaryImage transformMode="c_fill" width={width} height={height} class="hover:scale-105 transition-transform duration-300 ease-in-out w-full h-full object-cover rounded-lg" alt={alt} imageId={path}/>
+            
+            {caption && (
+                <div class={`absolute bottom-4 left-4 ${captionClasses} px-3 py-1 rounded-md font-medium shadow-md border border-${colors.pictureGallery.caption.borderColor} dark:border-${colors.pictureGallery.caption.darkModeBorder}`}>
+                    {caption}
+                </div>
+            )}
+        </>
+    )}
+</div>

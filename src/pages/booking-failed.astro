@@ -1,0 +1,51 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { formTranslations } from '../lib/translations/form';
+
+const language = 'de'; // Default to German
+const t = formTranslations[language] || formTranslations.en;
+
+// Get error details from URL if available
+const error = Astro.url.searchParams.get('error');
+---
+
+<Layout title="Buchung fehlgeschlagen | Hotel Stern">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-red-600 mb-4">
+                    {t.booking_failed || "Buchung fehlgeschlagen"}
+                </h1>
+                <div class="mb-6">
+                    <svg class="w-16 h-16 text-red-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </div>
+                <p class="text-lg text-gray-700 mb-4">
+                    {t.payment_failed || "Die Zahlung konnte nicht abgeschlossen werden."}
+                </p>
+                {error && (
+                    <p class="text-md text-gray-600 mb-4">
+                        {t.error_message || "Fehlermeldung"}: <span class="font-semibold">{decodeURIComponent(error)}</span>
+                    </p>
+                )}
+                <div class="mt-8 space-y-4">
+                    <a
+                        href="/booking"
+                        class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        {t.try_again || "Erneut versuchen"}
+                    </a>
+                    <div class="mt-4">
+                        <a
+                            href="/"
+                            class="inline-block text-blue-600 hover:text-blue-800 transition-colors"
+                        >
+                            {t.return_to_home || "Zurück zur Startseite"}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</Layout>

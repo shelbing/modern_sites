@@ -1,0 +1,10 @@
+# Font Configuration for SBH Hotel Property
+# 
+# This file contains font selection configuration specific to the SBH property.
+# Property-specific YAML allows each property to have its own typography identity.
+
+# Selected font combination (1-23)
+selectedFontCombination: 5
+
+# Debug mode
+debugFonts: false

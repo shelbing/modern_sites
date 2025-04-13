@@ -1,0 +1,189 @@
+---
+/**
+ * FontSizes.astro
+ * 
+ * This component dynamically generates CSS variables for font sizes based on the
+ * centralized fontSizes.js configuration. It ensures that the CSS variables
+ * always match the JavaScript configuration.
+ */
+import fontSizesModule from '../../config/fontSizes.js';
+
+// Define interface to match expected font size structure
+interface FontSizes {
+  h1: string;
+  h2: string;
+  h3: string;
+  h4: string;
+  h5: string;
+  h6: string;
+  body: {
+    xs: string;
+    sm: string;
+    base: string;
+    lg: string;
+    xl: string;
+  };
+  rich?: {
+    desktop?: string;
+    tablet?: string;
+    mobile?: string;
+  };
+  price?: string;
+  [key: string]: any; // Allow for other custom font sizes
+}
+
+// Get all font sizes from the configuration
+let fontSizes: Record<string, any> = fontSizesModule;
+
+// Ensure all required font sizes exist
+fontSizes = ensureRequiredFontSizes(fontSizes) as FontSizes;
+
+// Function to flatten nested font size objects into CSS variable names
+function flattenFontSizes(obj: Record<string, any>, prefix = ''): Record<string, string> {
+  let result: Record<string, string> = {};
+  
+  for (const key in obj) {
+    const newPrefix = prefix ? `${prefix}-${key}` : key;
+    
+    if (typeof obj[key] === 'object' && obj[key] !== null) {
+      // Recursively process nested objects
+      const nested = flattenFontSizes(obj[key], newPrefix);
+      result = { ...result, ...nested };
+    } else {
+      // Add the font size as a CSS variable
+      result[`--font-size-${newPrefix}`] = obj[key];
+    }
+  }
+  
+  return result;
+}
+
+// Ensure all required font sizes exist with fallbacks
+function ensureRequiredFontSizes(fontSizes: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = { ...fontSizes };
+  
+  // Ensure heading sizes exist
+  for (let i = 1; i <= 6; i++) {
+    if (!result[`h${i}`]) {
+      // Fallback values for missing heading sizes
+      const fallbacks: Record<string, string> = {
+        h1: '2.5rem',
+        h2: '2rem',
+        h3: '1.75rem',
+        h4: '1.5rem',
+        h5: '1.25rem',
+        h6: '1.1rem'
+      };
+      const key = `h${i}` as keyof typeof fallbacks;
+      result[key] = fallbacks[key];
+    }
+  }
+  
+  // Ensure body sizes exist
+  if (!result.body) {
+    result.body = {};
+  }
+  
+  const bodySizes = ['xs', 'sm', 'base', 'lg', 'xl'] as const;
+  type BodySize = typeof bodySizes[number];
+  
+  const bodyFallbacks: Record<BodySize, string> = {
+    xs: '0.75rem',
+    sm: '0.875rem',
+    base: '1rem',
+    lg: '1.125rem',
+    xl: '1.25rem'
+  };
+  
+  for (const size of bodySizes) {
+    if (!result.body[size]) {
+      result.body[size] = bodyFallbacks[size];
+    }
+  }
+  
+  return result;
+}
+
+// Generate flattened CSS variables
+const cssVariables = flattenFontSizes(fontSizes);
+
+// Debug mode - only in development
+const isDebugMode = import.meta.env.DEV;
+---
+
+<!-- Generate CSS variables for font sizes -->
+<style is:global define:vars={cssVariables}>
+  /* Font size CSS variables generated from fontSizes.js */
+  :root {
+    /* Variables are injected from fontSizes.js */
+  }
+  
+  /* Apply heading font sizes */
+  h1, .h1 { font-size: var(--font-size-h1); }
+  h2, .h2 { font-size: var(--font-size-h2); }
+  h3, .h3 { font-size: var(--font-size-h3); }
+  h4, .h4 { font-size: var(--font-size-h4); }
+  h5, .h5 { font-size: var(--font-size-h5); }
+  h6, .h6 { font-size: var(--font-size-h6); }
+  
+  /* Apply body font sizes */
+  .text-xs { font-size: var(--font-size-body-xs); }
+  .text-sm { font-size: var(--font-size-body-sm); }
+  .text-base { font-size: var(--font-size-body-base); }
+  .text-lg { font-size: var(--font-size-body-lg); }
+  .text-xl { font-size: var(--font-size-body-xl); }
+</style>
+
+<!-- Font size debug panel (only in development) -->
+{isDebugMode && (
+  <div class="font-size-debug hidden">
+    <h3>Font Size Debug</h3>
+    <div class="font-size-list">
+      {Object.entries(cssVariables).map(([name, value]) => (
+        <div class="font-size-item">
+          <code>{name}</code>: <span>{value}</span>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+<script>
+  // Toggle font size debug panel with Shift+Alt+F
+  document.addEventListener('keydown', (e) => {
+    if (e.shiftKey && e.altKey && e.key === 'F') {
+      const debugPanel = document.querySelector('.font-size-debug');
+      if (debugPanel) {
+        debugPanel.classList.toggle('hidden');
+      }
+    }
+  });
+</script>
+
+<style>
+  .font-size-debug {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    max-width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 9999;
+    font-family: monospace;
+    font-size: 12px;
+  }
+  
+  .font-size-item {
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+  }
+  
+  .hidden {
+    display: none;
+  }
+</style>

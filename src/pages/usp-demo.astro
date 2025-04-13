@@ -1,0 +1,42 @@
+---
+import Layout from '../layouts/Layout.astro';
+import USPSection from '../components/Sections/USPSection.astro';
+---
+
+<Layout title="USP Section Demo - Hotel Stern">
+  <main class="mt-16">
+    <!-- Demo page header -->
+    <div class="bg-paper-light dark:bg-paper-dark py-8 mb-8">
+      <div class="container mx-auto px-4">
+        <h1 class="text-h1 text-text-light dark:text-text-dark text-center font-bold">
+          USP Section Demonstration
+        </h1>
+        <p class="text-body-lg text-textSecondary-light dark:text-textSecondary-dark text-center mt-4">
+          Diese Seite zeigt die neue USP-Sektion für die Startseite des Hotels.
+        </p>
+      </div>
+    </div>
+    
+    <!-- The USP Section component -->
+    <USPSection />
+    
+    <!-- Additional explanation -->
+    <div class="container mx-auto px-4 py-12">
+      <div class="bg-paper-light dark:bg-paper-dark p-6 rounded-lg shadow-md">
+        <h2 class="text-h3 text-text-light dark:text-text-dark font-bold mb-4">Über diese Komponente</h2>
+        <ul class="list-disc pl-6 space-y-2 text-body-base text-textSecondary-light dark:text-textSecondary-dark">
+          <li>Responsive Layout: 4 Karten nebeneinander auf Desktops, 2x2 auf Tablets, einzelne Spalte auf Mobilgeräten</li>
+          <li>Zentrierte Bilder im 16:9 Format für konsistentes Erscheinungsbild</li>
+          <li>Einheitlicher Stil mit Überschrift, kurzem Text und "Mehr erfahren" Button</li>
+          <li>Vollständig mit dem Farbsystem der Seite integriert (Dark Mode unterstützt)</li>
+          <li>Hover-Effekte für interaktives Feedback</li>
+        </ul>
+        <div class="mt-8">
+          <a href="/" class="px-6 py-3 bg-primarybutton-light text-primarybuttontext-light dark:bg-primarybutton-dark dark:text-primarybuttontext-dark rounded-lg hover:opacity-90 transition-opacity">
+            Zurück zur Startseite
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>

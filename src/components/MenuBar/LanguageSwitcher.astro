@@ -1,0 +1,99 @@
+---
+const path = Astro.url.pathname;
+const currentLang = path.split('/')[1];
+
+const languages = [
+  { code: 'de', name: 'Deutsch' },
+  { code: 'en', name: 'English' },
+  { code: 'fr', name: 'Français' },
+  { code: 'es', name: 'Espagnol' }
+];
+
+// Ensure currentLang is a valid language code, default to 'en' if not
+const validLang = languages.some(lang => lang.code === currentLang) ? currentLang : 'en';
+---
+
+<nav>
+  <div class="relative inline-block text-left">
+    <!-- Create a custom dropdown that looks like a select but uses a button instead -->
+    <button 
+      id="language-button" 
+      class="flex items-center justify-between w-full bg-menu-light dark:bg-menu-dark text-menutext-light dark:text-menutext-dark px-4 py-2 rounded leading-tight focus:outline-none border border-gray-300 dark:border-gray-600"
+      type="button"
+      aria-haspopup="true"
+      aria-expanded="false"
+    >
+      <span id="selected-language" class="font-bold">
+        {languages.find(lang => lang.code === validLang)?.name || 'English'}
+      </span>
+      <svg class="h-4 w-4 ml-2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+        <path class="fill-menutext-light dark:fill-white" d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+      </svg>
+    </button>
+    
+    <!-- Hidden dropdown menu -->
+    <div 
+      id="language-dropdown" 
+      class="hidden absolute z-10 mt-1 w-full rounded-md bg-menu-light dark:bg-menu-dark shadow-lg"
+      role="menu"
+      aria-orientation="vertical"
+    >
+      <div class="py-1">
+        {languages.map((lang) => (
+          <a 
+            href="#" 
+            class="block px-4 py-2 text-menutext-light dark:text-menutext-dark hover:bg-gray-100 dark:hover:bg-gray-700"
+            role="menuitem"
+            data-lang-code={lang.code}
+          >
+            {lang.name}
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</nav>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const languageButton = document.getElementById('language-button');
+    const languageDropdown = document.getElementById('language-dropdown');
+    const selectedLanguage = document.getElementById('selected-language');
+    
+    // Toggle dropdown visibility when button is clicked
+    languageButton?.addEventListener('click', () => {
+      languageDropdown?.classList.toggle('hidden');
+      const expanded = languageButton.getAttribute('aria-expanded') === 'true';
+      languageButton.setAttribute('aria-expanded', (!expanded).toString());
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (event) => {
+      if (!languageButton?.contains(event.target as Node) && !languageDropdown?.contains(event.target as Node)) {
+        languageDropdown?.classList.add('hidden');
+        languageButton?.setAttribute('aria-expanded', 'false');
+      }
+    });
+    
+    // Handle language selection
+    const languageLinks = document.querySelectorAll('[data-lang-code]');
+    languageLinks.forEach((link) => {
+      link.addEventListener('click', (event) => {
+        event.preventDefault();
+        const langCode = (event.currentTarget as HTMLElement).getAttribute('data-lang-code');
+        if (!langCode) return;
+        
+        // Update UI
+        selectedLanguage!.textContent = (event.currentTarget as HTMLElement).textContent;
+        languageDropdown?.classList.add('hidden');
+        languageButton?.setAttribute('aria-expanded', 'false');
+        
+        // Change URL
+        const currentPath = window.location.pathname;
+        const pathParts = currentPath.split('/').slice(2);
+        const newPath = `/${langCode}/${pathParts.join('/')}`;
+        window.location.href = newPath;
+      });
+    });
+  });
+</script>

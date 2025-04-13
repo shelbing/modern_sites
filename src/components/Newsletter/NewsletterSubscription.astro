@@ -1,0 +1,120 @@
+---
+const { lang } = Astro.props;
+
+let placeholder = "E-Mail";
+let submitText;
+let successMessage;
+let errorMessage;
+
+switch (lang) {
+    case "en":
+        submitText = "Subscribe";
+        successMessage = "Thank you for subscribing!";
+        errorMessage = "Subscription failed. Please try again.";
+        break;
+    case "de":
+        submitText = "Abonnieren";
+        successMessage = "Vielen Dank für Ihre Anmeldung!";
+        errorMessage = "Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.";
+        break;
+    case "fr":
+        submitText = "S'abonner";
+        successMessage = "Merci de votre inscription !";
+        errorMessage = "L'inscription a échoué. Veuillez réessayer.";
+        break;
+    case "es":
+        submitText = "Suscribirse";
+        successMessage = "¡Gracias por suscribirse!";
+        errorMessage = "Error en la suscripción. Por favor, inténtelo de nuevo.";
+        break;
+    default:
+        submitText = "Abonnieren";
+        successMessage = "Vielen Dank für Ihre Anmeldung!";
+        errorMessage = "Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.";
+        break;
+}
+---
+<div class="w-full max-w-sm lg:ml-auto">
+    <form id="newsletter-form" class="flex w-full">
+        <div class="relative w-full">
+            <label for="email" class="hidden mb-2 text-sm font-medium text-gray-900 dark:text-gray-300">Email address</label>
+            <div class="flex absolute inset-y-0 left-0 items-center pl-3 pointer-events-none">
+                <svg class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                </svg>
+            </div>
+            <input type="email" id="email" name="email" class="block p-3 pl-10 w-full text-sm text-gray-900 bg-gray-50 rounded-l-lg border border-gray-300 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500" placeholder={placeholder} required>
+        </div>
+        <button type="submit" id="newsletter-submit" class="py-3 px-5 text-sm text-center text-text-light dark:text-text-dark rounded-r-lg border cursor-pointer bg-primary-600 border-primary-600 hover:bg-primary-700 focus:ring-4 focus:ring-primary-300 dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800">{submitText}</button>
+    </form>
+    <div id="newsletter-message" class="mt-2 text-sm hidden">
+        <p id="success-message" class="text-green-600 dark:text-green-400 hidden">{successMessage}</p>
+        <p id="error-message" class="text-red-600 dark:text-red-400 hidden">{errorMessage}</p>
+    </div>
+</div>
+
+<script>
+// @ts-nocheck
+import confetti from 'canvas-confetti';
+
+function showMessage(isSuccess) {
+    const messageDiv = document.getElementById('newsletter-message');
+    const successMsg = document.getElementById('success-message');
+    const errorMsg = document.getElementById('error-message');
+    
+    messageDiv.classList.remove('hidden');
+    successMsg.classList.toggle('hidden', !isSuccess);
+    errorMsg.classList.toggle('hidden', isSuccess);
+    
+    setTimeout(() => {
+        messageDiv.classList.add('hidden');
+    }, 5000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('newsletter-form');
+    const submitButton = document.getElementById('newsletter-submit');
+
+    form?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const emailInput = document.getElementById('email');
+        const email = emailInput?.value;
+
+        submitButton.disabled = true;
+        submitButton.classList.add('opacity-75');
+        
+        try {
+            const response = await fetch('/api/newsletter', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    email,
+                    lang: "{lang}" 
+                }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showMessage(true);
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+                emailInput.value = '';
+            } else {
+                showMessage(false);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showMessage(false);
+        } finally {
+            submitButton.disabled = false;
+            submitButton.classList.remove('opacity-75');
+        }
+    });
+});</script>

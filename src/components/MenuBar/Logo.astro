@@ -1,0 +1,9 @@
+---
+const {logoText} = Astro.props
+---
+<!-- <img src = {logo} class="mr-3 h-9 sm:h-12" alt="Logo" /> -->
+<span class="lg:hidden xl:inline self-center text-lg sm:text-xl font-bold whitespace-nowrap dark:text-white">{logoText}</span>
+<div class="hidden lg:flex flex-col xl:hidden items-center justify-center">
+  <span class="self-center text-xl font-bold whitespace-nowrap dark:text-white">Hotel Zum Stern</span>
+  <span class="self-center text-base font-bold whitespace-nowrap dark:text-white">- Aktiv seit 1360 -</span>
+</div>

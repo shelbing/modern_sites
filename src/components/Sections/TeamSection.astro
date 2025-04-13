@@ -1,0 +1,69 @@
+---
+/**
+ * TeamSection Component
+ * 
+ * This component renders a section displaying team members in a grid layout.
+ * It uses the SectionBlock component for consistent styling and structure.
+ * 
+ * Features:
+ * - Displays team members in a responsive grid (3 columns on medium screens and above)
+ * - Uses individual TeamMember components for each team member
+ * - Supports dark mode with appropriate text colors
+ * - Uses centralized color configuration from colors.js
+ * - Accepts header and subheader text for the section
+ * 
+ * Props (via Storyblok CMS):
+ * - blok.teamMembers: Array of TeamMemberData objects
+ * - blok.header: String for the section header
+ * - blok.subHeader: String for the section subheader
+ * - blok.backgroundColor: Optional custom background color class
+ * - blok.withBorder: Optional boolean to add border
+ * - blok.borderColorClass: Optional custom border color class
+ * 
+ * Usage:
+ * <TeamSection blok={storyblokData} />
+ */
+
+import TeamMember from './TeamMember.astro';
+import SectionBlock from '../Base/SectionBlock.astro';
+// Using centralized color system via Tailwind classes instead of direct color access
+
+interface TeamMemberData {
+  LastName: string;
+  FirstName: string;
+  Title: string;
+  Image: {
+    filename: string;
+  };
+  Citation: string;
+}
+
+interface TeamSectionProps {
+  blok: {
+    teamMembers: TeamMemberData[];
+    header: string;
+    subHeader: string;
+    backgroundColor?: string;
+    withBorder?: boolean;
+    borderColorClass?: string;
+  };
+}
+
+const { blok } = Astro.props as TeamSectionProps;
+const { teamMembers, header, subHeader, backgroundColor, withBorder, borderColorClass } = blok;
+---
+
+<SectionBlock 
+  header={header} 
+  subHeader={subHeader} 
+  sectionType="team" 
+  backgroundColorClass={backgroundColor} 
+  withBorder={withBorder} 
+  borderColorClass={borderColorClass}
+>
+  <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3 text-text-light dark:text-text-dark">
+    {teamMembers.map((member) => (
+      <TeamMember member={member} />
+    ))}
+  </div>
+</SectionBlock>

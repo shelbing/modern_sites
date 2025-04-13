@@ -1,0 +1,14 @@
+@import "flowbite/dist/flowbite.css";
+@import "./font-sizes.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: auto;
+  padding: 1rem;
+  width: 2000px;
+  max-width: calc(100% - 2rem);
+  /* Base font size is now defined in font-sizes.css */
+  line-height: 1.6;
+}

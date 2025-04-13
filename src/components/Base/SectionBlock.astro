@@ -1,0 +1,114 @@
+---
+/**
+ * SectionBlock Component
+ * 
+ * This component creates a standardized section block with a header, subheader, and content slot.
+ * It provides consistent styling and structure for various sections across the website.
+ * 
+ * Features:
+ * - Responsive design with tailwind classes
+ * - Dark mode support
+ * - Customizable header and subheader
+ * - Configurable background colors (component-specific or centralized)
+ * - Flexible content area using <slot>
+ * - Centralized color configuration from /src/config/colors.js
+ * 
+ * Props:
+ * - header: string - The main title of the section
+ * - subHeader: string - The subtitle or brief description of the section
+ * - centered: boolean - Whether the text should be centered (default: true)
+ * - sectionType: string - Type of section to use for centralized color config (default: 'default')
+ * - backgroundColorClass: string - Custom background color class (overrides sectionType)
+ * 
+ * Usage:
+ * <SectionBlock header="Main Title" subHeader="Brief description" sectionType="faq">
+ *   <!-- Content goes here -->
+ * </SectionBlock>
+ * 
+ * <SectionBlock header="Custom Background" backgroundColorClass="bg-red-100 dark:bg-red-900">
+ *   <!-- Content with custom background -->
+ * </SectionBlock>
+ */
+
+interface Props {
+  header: string;
+  subHeader?: string;
+  centered?: boolean;
+  sectionType?: string;
+  backgroundColorClass?: string;
+  withBorder?: boolean;
+  borderColorClass?: string;
+}
+
+// Import color utilities
+import { getColor } from '../../config/colors.js';
+
+const { 
+  header, 
+  subHeader, 
+  centered = true, 
+  sectionType = 'default', 
+  backgroundColorClass,
+  withBorder = false,
+  borderColorClass
+} = Astro.props;
+
+// Get color classes from centralized configuration
+const headerColorClass = `text-${getColor('sectionBlock.header.color')} dark:text-${getColor('sectionBlock.header.darkModeColor')}`;
+const subheaderColorClass = `text-${getColor('sectionBlock.subheader.color')} dark:text-${getColor('sectionBlock.subheader.darkModeColor')}`;
+
+// Determine background color class
+// Priority: 1. Custom backgroundColorClass prop, 2. Section-specific from centralized config, 3. Default background
+let bgColorClass = backgroundColorClass;
+if (!bgColorClass) {
+  // Try to get background color for the specific section type
+  const sectionBgLight = getColor(`sections.${sectionType}.background`) || 'background-light';
+  const sectionBgDark = getColor(`sections.${sectionType}.darkModeBackground`) || 'background-dark';
+  
+  // SIMPLIFIED APPROACH: Just apply bg- prefix to all color values
+  // This works for both theme variables and direct Tailwind colors
+  bgColorClass = `bg-${sectionBgLight} dark:bg-${sectionBgDark}`;
+}
+
+// Determine border styles
+let borderClass = '';
+if (withBorder) {
+  if (borderColorClass) {
+    borderClass = `border ${borderColorClass}`;
+  } else {
+    // Get section-specific border color or default to subtle gray border
+    const borderLight = getColor(`sections.${sectionType}.borderColor`) || 'gray-200';
+    const borderDark = getColor(`sections.${sectionType}.darkModeBorderColor`) || 'gray-700';
+    
+    // Check if the colors are theme variables or Tailwind color classes
+    const isLightThemeVar = borderLight.includes('-light');
+    const isDarkThemeVar = borderDark.includes('-dark');
+    
+    if (isLightThemeVar && isDarkThemeVar) {
+      // For theme variables, construct proper semantic classes
+      const lightBaseName = borderLight.replace('-light', '');
+      const darkBaseName = borderDark.replace('-dark', '');
+      
+      if (lightBaseName === darkBaseName) {
+        // If both light and dark versions use the same base color
+        borderClass = `border border-${lightBaseName}-light dark:border-${darkBaseName}-dark`;
+      } else {
+        // If they use different base colors
+        borderClass = `border border-${borderLight} dark:border-${borderDark}`;
+      }
+    } else {
+      // For Tailwind color classes
+      borderClass = `border border-${borderLight} dark:border-${borderDark}`;
+    }
+  }
+}
+---
+<section class={`${bgColorClass} ${borderClass} my-2 md:my-2 lg:my-2 p-4 rounded-2xl shadow-sm`}>
+    <div class={`py-4 md:py-6 lg:py-6 px-4 mx-auto max-w-screen-xl ${centered ? 'text-center' : ''}`}>
+        <h2 class={`mb-4 font-serif text-section-header font-bold ${headerColorClass}`}>{header}</h2>
+        {subHeader && 
+            <p class={`font-serif text-section-subheader font-bold ${subheaderColorClass} md:px-20 lg:px-38 xl:px-48 mb-4`}>{subHeader}</p>
+        }
+        <slot />
+    </div>
+</section>

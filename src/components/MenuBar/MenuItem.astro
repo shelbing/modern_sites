@@ -1,0 +1,130 @@
+---
+/**
+ * MenuItem Component
+ * 
+ * This component represents a single item in the navigation menu.
+ * It supports both top-level menu items and dropdown submenus.
+ * 
+ * Features:
+ * - Displays menu item text
+ * - Handles active state styling
+ * - Supports dropdown submenus
+ * - Responsive design (different behavior for desktop and mobile)
+ * - Handles main items without links
+ * 
+ * Props:
+ * - linkData: An object containing the menu item's data (text, link, subItems)
+ * 
+ * Usage:
+ * <MenuItem linkData={menuItemData} />
+ */
+
+const { linkData } = Astro.props;
+
+const text = linkData.Text;
+const link = linkData.Link;
+const currentPath = Astro.url.pathname;
+const lang = currentPath.split('/')[1];
+const currentPathAfterLang = '/' + currentPath.split('/').slice(2).join('/');
+const isActive = currentPathAfterLang === link;
+const activeClass = isActive ? 'text-green-500 font-bold dark:text-green-500' : 'dark:text-gray-400';
+const fullHref = `/${lang}${link}`;
+const subItems = linkData.SubItems;
+const hasSubItems = subItems && subItems.length > 0;
+---
+
+<li class="relative group">
+    <a 
+        href={link && link.length > 0 ? fullHref : undefined}
+        class={`flex items-center font-bold justify-between w-full py-1 pr-4 pl-3 text-text-light dark:text-text-dark border-b border-gray-100
+         hover:text-secondary-light hover:dark:text-secondary-dark 2xl:text-xl lg:border-0 lg:p-0 ${activeClass} ${!link || link.length === 0 ? 'cursor-default' : 'cursor-pointer'}`}
+    >
+        {text}
+        {hasSubItems && (
+            <svg class="w-4 h-4 ml-1 dropdown-toggle" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+        )}
+    </a>
+    {hasSubItems && (
+        <ul class="hidden absolute left-0 mt-2 py-2 w-48 bg-menu-light dark:bg-menu-dark rounded-md shadow-xl z-10 dropdown-menu">
+            {subItems.map((subItem: { SubTitle?: boolean; Text: string; Link?: string }) => (
+                <li>
+                    {subItem.SubTitle ? (
+                        <span class="block px-4 py-1 text-base 2xl:text-xl font-bold text-menuaccent-light dark:text-menuaccent-dark">
+                            {subItem.Text}
+                        </span>
+                    ) : (
+                        <a 
+                            href={`/${lang}${subItem.Link}`}
+                            class="block px-4 py-2 text-base 2xl:text-xl  text-menutext-light dark:text-menutext-dark hover:underline underline-offset-2"
+                        >
+                            {subItem.Text}
+                        </a>
+                    )}
+                </li>
+            ))}
+        </ul>
+    )}
+</li>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const menuItems = document.querySelectorAll('.group');
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('.dropdown-menu').forEach(dropdown => {
+                dropdown.classList.add('hidden');
+            });
+        }
+
+        menuItems.forEach(item => {
+            const link = item.querySelector('a');
+            const dropdown = item.querySelector('.dropdown-menu');
+
+            if (dropdown) {
+                const showDropdown = () => {
+                    if (timeoutId) clearTimeout(timeoutId);
+                    closeAllDropdowns();
+                    dropdown.classList.remove('hidden');
+                };
+
+                const hideDropdown = () => {
+                    timeoutId = setTimeout(() => {
+                        dropdown.classList.add('hidden');
+                    }, 200);
+                };
+
+                // Desktop behavior
+                if (window.innerWidth >= 1024) {
+                    item.addEventListener('mouseenter', showDropdown);
+                    item.addEventListener('mouseleave', hideDropdown);
+                    dropdown.addEventListener('mouseenter', () => {
+                        if (timeoutId) clearTimeout(timeoutId);
+                    });
+                    dropdown.addEventListener('mouseleave', hideDropdown);
+                } 
+                // Mobile behavior
+                else {
+                    link?.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        dropdown.classList.toggle('hidden');
+                    });
+                }
+            }
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!(event.target as Element).closest('.group')) {
+                closeAllDropdowns();
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 1024) {
+                closeAllDropdowns();
+            }
+        });
+    });
+</script>

@@ -1,0 +1,45 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import PaymentProviderDashboard from '../../components/admin/PaymentProviderDashboard.svelte';
+import PaymentMethodsManager from '../../components/admin/PaymentMethodsManager.svelte';
+---
+
+<Layout title="Payment Provider Settings - Hotel Stern Admin">
+  <main class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-serif mb-6 text-sectionheader-light dark:text-sectionheader-dark">Payment Provider Management</h1>
+    
+    <div class="mb-8 p-4 bg-background-light dark:bg-background-dark rounded-lg shadow">
+      <h2 class="text-xl font-serif mb-4 text-sectionheader-light dark:text-sectionheader-dark">Payment System Overview</h2>
+      <div class="p-4 bg-paper-light dark:bg-paper-dark rounded-lg">
+        <p class="mb-4 text-text-light dark:text-text-dark">The Hotel Stern website uses a flexible payment provider factory pattern that supports multiple payment processors:</p>
+        <ul class="list-disc pl-5 mb-4 text-text-light dark:text-text-dark">
+          <li>Stripe - Full credit card processing with international support</li>
+          <li>SumUp - European payment processor with competitive rates</li>
+          <li>Adyen - Enterprise-level payment platform with global coverage</li>
+        </ul>
+        
+        <div class="mt-6">
+          <h3 class="text-lg font-bold mb-2 text-text-light dark:text-text-dark">How to Change Payment Providers</h3>
+          <p class="mb-2 text-text-light dark:text-text-dark">To switch between payment providers, use one of these methods:</p>
+          
+          <div class="mb-4">
+            <h4 class="font-bold text-text-light dark:text-text-dark">Method 1: Using Environment Variables</h4>
+            <p class="text-text-light dark:text-text-dark">Edit the <code>.env</code> file and change the <code>PUBLIC_PAYMENT_PROVIDER</code> value to one of: <code>stripe</code>, <code>sumup</code>, or <code>adyen</code>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="grid gap-8">
+      <!-- Payment Provider Dashboard -->
+      <div>
+        <PaymentProviderDashboard client:load />
+      </div>
+      
+      <!-- Payment Methods Manager -->
+      <div class="mt-8">
+        <PaymentMethodsManager client:load />
+      </div>
+    </div>
+  </main>
+</Layout>

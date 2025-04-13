@@ -1,0 +1,36 @@
+---
+import ViomaTracking from "../Scripts/ViomaTracking.astro";
+
+const { blok,language } = Astro.props
+const id = blok.vioma_id
+const container_id = `vri-container-${id}`;
+const header = blok.Header
+---
+<ViomaTracking />
+{header !== "" ? (
+  <div class="bg-background-light flex justify-center dark:bg-background-dark py-4 my-4 rounded-xl">
+    <div class="max-w-screen-xl">
+      <div class="text-4xl p-4 text-text-light dark:text-text-dark">
+        {header}
+      </div>
+      <div id={container_id}></div>
+    </div>
+  </div>
+) : (
+  <div class="flex justify-center vioma" id={container_id}></div>
+)}
+
+<script is:inline type="text/javascript" set:html={`
+  (function (v, i, o, m, a, id) {
+    if (!(o in v)) {
+      v.vioma_vri = o;
+      v[o] || (v[o] = function () { (v[o].q = v[o].q || []).push(arguments); });
+      m = i.createElement('script'), a = i.scripts[0];
+      m.src = 'https://cst-client-channel-1341-gwuk.viomassl.com/js/vri/vri.js';
+      a.parentNode.insertBefore(m, a);
+    }
+  })(window, document, 'vcst', undefined, undefined, '${id}');
+
+  vcst({ load: 'init', url: 'https://cst-client-channel-1341-gwuk.viomassl.com/', set_language: '${language}' });
+  vcst({ id: '${id}' });
+`}></script>

@@ -1,0 +1,97 @@
+---
+/**
+ * Font Preview Loader Component
+ * 
+ * This component loads all Google Fonts for the font combinations being previewed.
+ * It should be included in any page that displays font previews with inline styles.
+ */
+import fontCombinations from '../../config/fontCombinations';
+
+// Optionally filter which fonts to load
+const { fontIndices = [], debug = false } = Astro.props;
+
+// If fontIndices is provided and not empty, only load those fonts
+// Otherwise, load all fonts
+const fontsToLoad = fontIndices.length > 0
+  ? fontCombinations.filter((_, index) => fontIndices.includes(index + 1))
+  : fontCombinations;
+
+// Log information about fonts being loaded
+console.log(`FontPreviewLoader: Loading ${fontsToLoad.length} font combinations`);
+if (fontsToLoad.length > 0) {
+  console.log('FontPreviewLoader: Loading fonts:');
+  fontsToLoad.forEach((font, index) => {
+    console.log(`  - #${fontIndices.length > 0 ? fontIndices[index] : index + 1}: ${font.name} (${font.heading}/${font.body})`);
+  });
+}
+---
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+{fontsToLoad.map((font, index) => (
+  <link 
+    href={font.googleFontsUrl} 
+    rel="stylesheet" 
+    data-font-name={font.name}
+    data-font-index={fontIndices.length > 0 ? fontIndices[index] : index + 1}
+    onload={`console.log('Font loaded: ${font.name}')`}
+  >
+))}
+
+<!-- Debug info (always visible in development, or when debug is true) -->
+{(import.meta.env.DEV || debug) && (
+  <div class={debug ? "font-debug-info bg-white dark:bg-gray-800 p-2 text-xs border rounded mb-4" : "hidden"}>
+    <p class="font-bold">FontPreviewLoader Debug:</p>
+    <p>Loaded {fontsToLoad.length} font combinations</p>
+    <ul class="list-disc pl-5 mt-1">
+      {fontsToLoad.map((font, index) => (
+        <li>
+          #{fontIndices.length > 0 ? fontIndices[index] : index + 1}: 
+          <span style={`font-family: "${font.heading}"`}>{font.heading}</span> / 
+          <span style={`font-family: "${font.body}"`}>{font.body}</span>
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
+
+<!-- Font loading verification script -->
+<script>
+  // Check if fonts are actually loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('Verifying font loading...');
+    const fontLinks = document.querySelectorAll('link[data-font-name]');
+    
+    fontLinks.forEach(link => {
+      const fontName = link.getAttribute('data-font-name');
+      const fontIndex = link.getAttribute('data-font-index');
+      
+      // Create a simple check to see if the font is loaded
+      setTimeout(() => {
+        console.log(`Checking font #${fontIndex}: ${fontName}`);
+        // This is a basic check that will log to console
+        console.log(`Font #${fontIndex} (${fontName || 'unknown'}) status: ${typeof document.fonts.check === 'function' ? 'API available' : 'API not available'}`);
+        
+        if (document.fonts && typeof document.fonts.check === 'function' && fontName) {
+          // Modern browsers support the Font Loading API
+          const fontParts = fontName.split('/');
+          const headingFont = fontParts[0] ? fontParts[0].trim() : '';
+          const bodyFont = fontParts.length > 1 && fontParts[1] ? fontParts[1].trim() : '';
+          
+          let headingLoaded = false;
+          let bodyLoaded = false;
+          
+          if (headingFont) {
+            headingLoaded = document.fonts.check('1em "' + headingFont + '"');
+            console.log(`Font #${fontIndex} (${fontName}) heading loaded: ${headingLoaded}`);
+          }
+          
+          if (bodyFont) {
+            bodyLoaded = document.fonts.check('1em "' + bodyFont + '"');
+            console.log(`Font #${fontIndex} (${fontName}) body loaded: ${bodyLoaded}`);
+          }
+        }
+      }, 500); // Small delay to allow fonts to load
+    });
+  });
+</script>

@@ -1,0 +1,50 @@
+# Font Sizes Configuration for SZS Hotel Property
+# 
+# This file contains custom font size definitions specific to the SZS property.
+# All section-specific font sizes are defined here and can be imported by fontSizes.js.
+# 
+# Property-specific YAML allows each property to have its own visual identity.
+
+# Heading font sizes
+h1: '2rem'    # 50px
+h2: '2rem'      # 40px
+h3: '1.5rem'   # 35px
+h4: '1.3rem'    # 30px
+h5: '1.25rem'   # 25px
+h6: '1.1rem'    # 22px
+
+# Body text sizes
+body:
+  xs: '0.75rem'  # 15px
+  sm: '0.875rem' # 17.5px
+  base: '1rem'   # 20px
+  lg: '1.125rem' # 22.5px
+  xl: '1.25rem'  # 25px
+
+# Responsive text sizes for rich text content
+rich:
+  desktop: '1.6rem'   # 32px for large screens
+  tablet: '1.4rem'    # 28px for medium screens
+  mobile: '1.2rem'    # 24px for small screens
+
+# Special element sizes
+button: '1rem'       # 20px
+caption: '0.875rem'  # 17.5px
+label: '0.875rem'    # 17.5px
+price: '1.25rem'     # 25px
+badge: '0.75rem'     # 15px
+
+# Section header sizes
+section:
+  header: '35px'    # 45px (increased from typical h2)
+  subheader: '1.5rem'  # 30px
+
+# FAQ section sizes
+faq:
+  question: '1rem'     # 20px (default size for questions)
+  questionMobile: '1rem' # 20px for mobile
+  answer: '1rem'       # 20px
+  answerMd: '1rem'     # 20px for medium screens and up
+
+# Debug and utility sizes
+debug: '0.6rem'      # 12px

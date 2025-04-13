@@ -1,0 +1,10 @@
+# Font Configuration for SWR Hotel Property
+# 
+# This file contains font selection configuration specific to the SWR property.
+# Property-specific YAML allows each property to have its own typography identity.
+
+# Selected font combination (1-23)
+selectedFontCombination: 7
+
+# Debug mode
+debugFonts: false

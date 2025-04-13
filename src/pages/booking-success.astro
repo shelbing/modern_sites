@@ -1,0 +1,81 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { formTranslations } from '../lib/translations/form';
+// Stores are used in client-side scripts or for future implementation
+// import { stripeStore } from '../stores/stripeStore';
+// import { cartStore } from '../stores/cartStore';
+
+const language = 'de'; // Default to German
+const t = formTranslations[language] || formTranslations.en;
+
+// Get payment details from URL if available
+const paymentIntent = Astro.url.searchParams.get('payment_intent');
+const bookingReference = Astro.url.searchParams.get('booking_reference');
+const amount = Astro.url.searchParams.get('amount');
+const provider = Astro.url.searchParams.get('payment_provider');
+
+// Format amount if available
+const formattedAmount = amount ? new Intl.NumberFormat('de-DE', {
+    style: 'currency',
+    currency: 'EUR'
+}).format(parseFloat(amount)) : null;
+---
+
+<Layout title="Buchung erfolgreich | Hotel Stern">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-md">
+            <div class="text-center">
+                <h1 class="text-3xl font-bold text-green-600 mb-4">
+                    {t.bookingSuccess || "Buchung erfolgreich!"}
+                </h1>
+                <div class="mb-6">
+                    <svg class="w-16 h-16 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <p class="text-lg text-gray-700 mb-4">
+                    {t.bookingConfirmationSent || "Eine Bestätigung wurde an Ihre E-Mail-Adresse gesendet."}
+                </p>
+
+                <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                    <h2 class="text-xl font-semibold mb-4">{t.paymentDetails || "Zahlungsdetails"}</h2>
+                    <div class="space-y-2 text-left">
+                        {bookingReference && (
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">{t.bookingReference || "Buchungsnummer"}:</span>
+                                <span class="font-semibold">{bookingReference}</span>
+                            </div>
+                        )}
+                        {formattedAmount && (
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">{t.amount || "Betrag"}:</span>
+                                <span class="font-semibold">{formattedAmount}</span>
+                            </div>
+                        )}
+                        {provider && (
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">{t.payment_method || "Zahlungsmethode"}:</span>
+                                <span class="font-semibold capitalize">{provider}</span>
+                            </div>
+                        )}
+                        {paymentIntent && (
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">{t.transaction_id || "Transaktions-ID"}:</span>
+                                <span class="font-mono text-sm">{paymentIntent}</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <a
+                        href="/"
+                        class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                        {t.return_to_home || "Zurück zur Startseite"}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</Layout>

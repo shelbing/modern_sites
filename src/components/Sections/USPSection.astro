@@ -1,0 +1,315 @@
+---
+/**
+ * USPSection Component
+ * 
+ * This component displays 4 USP (Unique Selling Proposition) cards for the hotel.
+ * Each card includes an image, title, description, and a link.
+ * The component is responsive and adapts to different screen sizes.
+ * 
+ * Uses centralized color configuration from /src/config/colors.js
+ * Integrates with Storyblok CMS for content management.
+ */
+
+/**
+ * Interface defining the structure of the props expected by the USPSection component.
+ */
+interface USPSectionProps {
+  blok: {
+    title: string;           // Main section heading
+    subtitle: string;        // Subheading or description
+    uspCards: Array<{       // USP cards array
+      _uid: string;         // Unique identifier for the card
+      image: {              // Image object from Storyblok
+        filename: string;   // Image URL
+        alt?: string;       // Alt text for accessibility
+      };
+      title: string;        // Card heading
+      description: string;  // Card description
+      link: string;         // Link URL as a text field
+      linkText?: string;    // Optional custom button text
+    }>;
+  }
+}
+
+// Destructure the props and assign types, providing default empty object if blok isn't provided
+const { blok = {title: '', subtitle: '', uspCards: []} } = Astro.props as Partial<USPSectionProps>;
+
+// Ensure blok and its properties exist to avoid errors when accessing nested properties
+const safeBlok = {
+  title: blok?.title || "Unser Hotel auf einen Blick",
+  subtitle: blok?.subtitle || "Entdecken Sie, was unser Hotel zu einem besonderen Erlebnis macht",
+  uspCards: blok?.uspCards || []
+};
+
+// Import SectionBlock component
+import SectionBlock from '../Base/SectionBlock.astro';
+
+// Import colors from the centralized semantic color system
+import colors from '../../config/colors.js';
+// Import the Colors type from the type definition file
+import type { Colors } from '../../config/colors';
+
+// Extend colors with the utility functions we know exist but TypeScript doesn't recognize
+type ColorUtils = {
+  getTailwindColorClasses: (section: string) => Record<string, string>;
+};
+
+const colorsWithUtils = colors as unknown as Colors & ColorUtils;
+
+// Get the USP section color classes using the centralized utility function
+const uspColorClasses = colorsWithUtils.getTailwindColorClasses('uspSection');
+
+// Get text color classes for card title and description
+const cardTitleClass = uspColorClasses['uspSection-cardTitle'] ? `${uspColorClasses['uspSection-cardTitle']}` : 'text-text-light dark:text-text-dark';
+// Force white text for descriptions in dark mode for better contrast
+const cardDescriptionClass = 'text-textSecondary-light dark:text-white';
+
+// We use the centralized color system through the SectionBlock component
+---
+
+<SectionBlock 
+  header={safeBlok.title} 
+  subHeader={safeBlok.subtitle}
+  sectionType="uspSection"
+  centered={true}
+>
+    
+    <!-- USP Cards Slider -->
+    <div class="usp-slider-container relative overflow-hidden mt-8">
+      {safeBlok.uspCards.length > 0 ? (
+        <>
+          <div class="usp-slider flex transition-transform duration-500 ease-in-out gap-6 lg:gap-8">
+            {safeBlok.uspCards.map(card => (
+              <div class="usp-slide flex-shrink-0 w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(25%-1.5rem)]">
+                <div class="bg-paper-light dark:bg-paper-dark rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:transform hover:scale-102 flex flex-col h-full">
+                  <!-- Card Image -->
+                  <div class="relative aspect-[16/9]">
+                    <img 
+                      src={card.image?.filename || ''} 
+                      alt={card.image?.alt || card.title || 'Hotel feature image'} 
+                      class="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                  
+                  <!-- Card Content -->
+                  <div class="p-6 flex flex-col flex-grow">
+                    <h3 class={`text-h4 font-bold ${cardTitleClass} text-center mb-3`}>{card.title}</h3>
+                    <p class={`text-body-base ${cardDescriptionClass} text-center mb-6 flex-grow`}>{card.description}</p>
+                    <div class="mt-auto text-center">
+                      <a 
+                        href={card.link || '#'} 
+                        target={card.link?.startsWith('http') ? '_blank' : '_self'}
+                        class="inline-block px-6 py-3 bg-accent-light text-white dark:bg-accent-dark dark:text-white rounded-lg hover:bg-accent-light/90 dark:hover:bg-accent-dark/90 focus:outline-none focus:ring-2 focus:ring-accent-light/50 dark:focus:ring-accent-dark/50 focus:ring-offset-2 shadow-md transition-all duration-200"
+                        aria-label={`Mehr über ${card.title} erfahren`}
+                        rel={card.link?.startsWith('http') ? 'noopener noreferrer' : undefined}
+                      >
+                        {card.linkText || "Mehr erfahren"}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <!-- Slider Navigation -->
+          <button
+            class="slider-btn prev absolute top-1/2 left-4 transform -translate-y-1/2 bg-primarybutton-light text-primarybuttontext-light dark:bg-primarybutton-dark dark:text-primarybuttontext-dark p-2 rounded-full z-10 opacity-80 hover:opacity-100 transition-opacity"
+            aria-label="Previous USP"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+          </button>
+          <button
+            class="slider-btn next absolute top-1/2 right-4 transform -translate-y-1/2 bg-primarybutton-light text-primarybuttontext-light dark:bg-primarybutton-dark dark:text-primarybuttontext-dark p-2 rounded-full z-10 opacity-80 hover:opacity-100 transition-opacity"
+            aria-label="Next USP"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+          <!-- Dots Indicators -->
+          <div class="dots-container flex justify-center mt-4 space-x-2"></div>
+        </>
+      ) : (
+        <div class="text-center py-8">
+          <p class="text-body-lg text-textSecondary-light dark:text-textSecondary-dark mb-4">Keine USP-Karten gefunden.</p>
+        </div>
+      )}
+    </div>
+</SectionBlock>
+
+<style>
+  /* Additional custom styles */
+  .hover\:scale-102:hover {
+    transform: scale(1.02);
+  }
+
+  /* Slider styles */
+  .usp-slider-container {
+    width: 100%;
+    position: relative;
+  }
+
+  .slider-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Dot indicator styles */
+  .dots-container .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+</style>
+
+<script>
+  // Function to set up the USP slider
+  function setupUspSlider(): void {
+    const sliderContainer = document.querySelector<HTMLElement>('.usp-slider-container');
+    if (!sliderContainer) return;
+
+    const slider = sliderContainer.querySelector<HTMLElement>('.usp-slider');
+    const slides = sliderContainer.querySelectorAll<HTMLElement>('.usp-slide');
+    const prevBtn = sliderContainer.querySelector<HTMLElement>('.prev');
+    const nextBtn = sliderContainer.querySelector<HTMLElement>('.next');
+    const dotsContainer = sliderContainer.querySelector<HTMLElement>('.dots-container');
+
+    if (!slider || !slides.length || !prevBtn || !nextBtn || !dotsContainer) return;
+
+    // Variables for the slider
+    let currentIndex = 0;
+    let autoSlideInterval: number | undefined;
+    const slideCount = slides.length;
+    
+    // Determine number of slides to show based on screen size
+    let slidesToShow = 1; // Default for mobile
+    if (window.innerWidth >= 1024) { // lg breakpoint
+      slidesToShow = 4;
+    } else if (window.innerWidth >= 640) { // sm breakpoint
+      slidesToShow = 2;
+    }
+    
+    const maxIndex = Math.max(0, slideCount - slidesToShow);
+
+    // Only show slider controls if we have more slides than can be displayed at once
+    if (slideCount <= slidesToShow) {
+      prevBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+      dotsContainer.style.display = 'none';
+      return; // No need for slider functionality if all cards fit
+    }
+
+    // Create dot indicators
+    for (let i = 0; i <= maxIndex; i++) {
+      const dot = document.createElement('span');
+      dot.classList.add('dot', 'inline-block', 'bg-gray-300', 'dark:bg-gray-600');
+      if (i === 0) dot.classList.add('bg-primary-light', 'dark:bg-primary-dark');
+      dot.dataset.index = i.toString();
+      dot.addEventListener('click', () => goToSlide(i));
+      dotsContainer.appendChild(dot);
+    }
+
+    // Function to update the slider position
+    function updateSlider(): void {
+      // Safety check to ensure elements exist
+      if (!slider || !dotsContainer) return;
+      
+      // Calculate slide width and gap based on screen size
+      const slideWidth = slides[0].offsetWidth;
+      const gapWidth = window.innerWidth >= 1024 ? 32 : 24; // 2rem (32px) for lg screens, 1.5rem (24px) for smaller screens
+
+      // Move the slider to the current position
+      slider.style.transform = `translateX(-${currentIndex * (slideWidth + gapWidth)}px)`;
+
+      // Update active dot
+      const dots = dotsContainer.querySelectorAll('.dot');
+      dots.forEach((dot, i) => {
+        if (i === currentIndex) {
+          dot.classList.add('bg-primary-light', 'dark:bg-primary-dark');
+          dot.classList.remove('bg-gray-300', 'dark:bg-gray-600');
+        } else {
+          dot.classList.remove('bg-primary-light', 'dark:bg-primary-dark');
+          dot.classList.add('bg-gray-300', 'dark:bg-gray-600');
+        }
+      });
+    }
+
+    // Go to a specific slide
+    function goToSlide(index: number): void {
+      currentIndex = Math.max(0, Math.min(index, maxIndex));
+      updateSlider();
+    }
+
+    // Show next slide
+    function showNextSlide(): void {
+      currentIndex = (currentIndex >= maxIndex) ? 0 : currentIndex + 1;
+      updateSlider();
+    }
+
+    // Show previous slide
+    function showPrevSlide(): void {
+      currentIndex = (currentIndex <= 0) ? maxIndex : currentIndex - 1;
+      updateSlider();
+    }
+
+    // Set up event listeners
+    prevBtn.addEventListener('click', showPrevSlide);
+    nextBtn.addEventListener('click', showNextSlide);
+
+    // Start auto-sliding
+    function startAutoSlide(): void {
+      stopAutoSlide();
+      autoSlideInterval = window.setInterval(showNextSlide, 8000);
+    }
+
+    // Stop auto-sliding
+    function stopAutoSlide(): void {
+      if (autoSlideInterval) window.clearInterval(autoSlideInterval);
+    }
+
+    // Pause auto-sliding when hovering over slider
+    sliderContainer.addEventListener('mouseenter', stopAutoSlide);
+    sliderContainer.addEventListener('mouseleave', startAutoSlide);
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      let newSlidesToShow = 1; // Default for mobile
+      if (window.innerWidth >= 1024) { // lg breakpoint
+        newSlidesToShow = 4;
+      } else if (window.innerWidth >= 640) { // sm breakpoint
+        newSlidesToShow = 2;
+      }
+      
+      if (newSlidesToShow !== slidesToShow) {
+        // Reload the page to recalculate everything
+        // This is a simple solution but could be improved for production
+        window.location.reload();
+      }
+    });
+
+    // Initialize slider
+    updateSlider();
+    startAutoSlide();
+  }
+
+  // Initialize the slider when the DOM is loaded
+  document.addEventListener('DOMContentLoaded', setupUspSlider);
+  
+  // Also initialize when Astro's view transition completes (for transitions between pages)
+  document.addEventListener('astro:page-load', setupUspSlider);
+
+  // Ensure the slider initializes when this script runs
+  // This helps when the page is already loaded before this script executes
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(setupUspSlider, 100);
+  }
+</script>

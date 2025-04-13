@@ -1,0 +1,101 @@
+---
+// Custom fonts component that loads fonts based on the selected combination in .env
+import { getSelectedFontCombination } from '../../config/fontCombinations';
+import dotenv from 'dotenv';
+
+// Ensure environment variables are loaded
+dotenv.config();
+
+const selectedFontCombination = getSelectedFontCombination();
+console.log(`CustomFonts.astro: Using font combination ${process.env.FONT_COMBINATION || '1'}`);
+console.log(`CustomFonts.astro: Selected font combination: ${selectedFontCombination.name}`);
+console.log(`CustomFonts.astro: Heading font: ${selectedFontCombination.heading}`);
+console.log(`CustomFonts.astro: Body font: ${selectedFontCombination.body}`);
+console.log(`CustomFonts.astro: Google Fonts URL: ${selectedFontCombination.googleFontsUrl}`);
+---
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link 
+  href={selectedFontCombination.googleFontsUrl} 
+  rel="stylesheet"
+  data-font-name={selectedFontCombination.name}
+  data-heading-font={selectedFontCombination.heading}
+  data-body-font={selectedFontCombination.body}
+  onload="console.log('CustomFonts: Font stylesheet loaded successfully')"
+  onerror="console.error('CustomFonts: Error loading font stylesheet')"
+>
+
+<!-- Debug info (only visible in development) -->
+{import.meta.env.DEV && (
+  <div class="fixed bottom-0 right-0 bg-white dark:bg-gray-800 text-xs p-2 rounded-tl-md shadow-md z-50 opacity-70 hover:opacity-100">
+    <p>Font Theme: {selectedFontCombination.name}</p>
+    <p>Heading: {selectedFontCombination.heading}</p>
+    <p>Body: {selectedFontCombination.body}</p>
+  </div>
+)}
+
+<!-- Font verification script -->
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('CustomFonts: Verifying font loading...');
+    
+    // Get the font link
+    const fontLink = document.querySelector('link[data-font-name]');
+    if (fontLink) {
+      const fontName = fontLink.getAttribute('data-font-name');
+      const headingFont = fontLink.getAttribute('data-heading-font');
+      const bodyFont = fontLink.getAttribute('data-body-font');
+      
+      console.log(`CustomFonts: Checking font "${fontName}"`);
+      
+      // Create a function to check font loading
+      const checkFonts = () => {
+        if (document.fonts && document.fonts.check) {
+          try {
+            const headingLoaded = document.fonts.check(`1em "${headingFont}"`);
+            const bodyLoaded = document.fonts.check(`1em "${bodyFont}"`);
+            
+            console.log(`CustomFonts: Heading font "${headingFont}" loaded: ${headingLoaded}`);
+            console.log(`CustomFonts: Body font "${bodyFont}" loaded: ${bodyLoaded}`);
+            
+            if (!headingLoaded || !bodyLoaded) {
+              console.warn('CustomFonts: Some fonts failed to load. This may cause display issues.');
+              
+              // If fonts haven't loaded after 1 second, try forcing a reload
+              if (!window.fontReloadAttempted) {
+                window.fontReloadAttempted = true;
+                console.log('CustomFonts: Attempting to force font reload...');
+                
+                // Create a new link element and replace the old one
+                const newLink = document.createElement('link');
+                newLink.rel = 'stylesheet';
+                newLink.href = fontLink.href;
+                newLink.setAttribute('data-font-name', fontName);
+                newLink.setAttribute('data-heading-font', headingFont);
+                newLink.setAttribute('data-body-font', bodyFont);
+                newLink.onload = () => {
+                  console.log('CustomFonts: Font stylesheet reloaded successfully');
+                  // Check again after a short delay
+                  setTimeout(checkFonts, 500);
+                };
+                
+                // Replace the existing link
+                fontLink.parentNode.replaceChild(newLink, fontLink);
+              }
+            }
+          } catch (error) {
+            console.error('CustomFonts: Error checking font loading:', error);
+          }
+        } else {
+          console.log('CustomFonts: Font loading API not available');
+        }
+      };
+      
+      // Check fonts after a delay to allow them to load
+      setTimeout(checkFonts, 1000);
+    } else {
+      console.error('CustomFonts: Font link not found');
+    }
+  });
+</script>

@@ -1,0 +1,209 @@
+---
+/**
+ * Background Color Demo Page
+ * 
+ * This page demonstrates all available section backgrounds and border configurations
+ * from the centralized color configuration system.
+ */
+import SectionBlock from '../components/Base/SectionBlock.astro';
+import TeamMember from '../components/Sections/TeamMember.astro';
+import { getColor } from '../config/colors.js';
+
+// Get all section types from the colors.js configuration
+const sections = getColor('sections') || {};
+const sectionTypes = Object.keys(sections);
+
+// Create mock team member data for demonstration
+const mockTeamMember = {
+  FirstName: "Jane",
+  LastName: "Doe",
+  Title: "Hotel Manager",
+  image: {
+    filename: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=400&q=80"
+  },
+  Citation: "Our team is dedicated to creating unforgettable experiences for our guests."
+};
+
+// Function to create sample content
+const getSampleContent = (sectionType: string): string => {
+  return `This is an example of the "${sectionType}" section background from the centralized color configuration.
+  It automatically applies the correct colors for both light and dark mode.`;
+}
+
+// Generate title case section name from camelCase
+const formatSectionName = (name: string): string => {
+  return name
+    .replace(/([A-Z])/g, ' $1') // Insert a space before all uppercase letters
+    .replace(/^./, (str: string) => str.toUpperCase()); // Uppercase the first letter
+}
+---
+
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Background Color System Demo</title>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark p-4">
+  <div class="max-w-screen-xl mx-auto">
+    <h1 class="text-4xl font-bold mb-8 text-center">Background Color System Demo</h1>
+    
+    <p class="text-lg mb-8 text-center">
+      This page demonstrates all available section background colors from the centralized configuration.
+      Toggle dark mode to see how backgrounds adapt automatically.
+    </p>
+
+    <div class="flex justify-center mb-8">
+      <button id="toggle-dark-mode" class="px-4 py-2 bg-primarybutton-light dark:bg-primarybutton-dark text-primarybuttontext-light dark:text-primarybuttontext-dark rounded-lg">
+        Toggle Dark Mode
+      </button>
+    </div>
+
+    <h2 class="text-2xl font-bold mb-4">Standard Section Types</h2>
+    <p class="mb-4 text-center">These sections use the centralized background color system. Each section type has specific light and dark mode colors.</p>
+    
+    {sectionTypes.map(sectionType => (
+      <SectionBlock 
+        header={formatSectionName(sectionType)} 
+        subHeader={`sectionType="${sectionType}"`}
+        sectionType={sectionType}
+      >
+        <div class="max-w-3xl mx-auto">
+          <p class="mb-4">{getSampleContent(sectionType)}</p>
+          <div class="bg-white/50 dark:bg-black/20 p-4 rounded-lg">
+            <code class="text-sm">
+              &lt;SectionBlock<br />
+              &nbsp;&nbsp;header="Example Header"<br />
+              &nbsp;&nbsp;subHeader="Example Subheader"<br />
+              &nbsp;&nbsp;sectionType="{sectionType}"<br />
+              &gt;<br />
+              &nbsp;&nbsp;&lt;!-- Content --&gt;<br />
+              &lt;/SectionBlock&gt;
+            </code>
+          </div>
+        </div>
+      </SectionBlock>
+    ))}
+
+    <h2 class="text-2xl font-bold mt-8 mb-4">With Borders</h2>
+    <p class="mb-4 text-center">The same sections with borders enabled, using the corresponding border colors for each section type.</p>
+    
+    {sectionTypes.map(sectionType => (
+      <SectionBlock 
+        header={`${formatSectionName(sectionType)} with Border`} 
+        subHeader={`sectionType="${sectionType}" withBorder={true}`}
+        sectionType={sectionType}
+        withBorder={true}
+      >
+        <div class="max-w-3xl mx-auto">
+          <p class="mb-4">{getSampleContent(sectionType)} This variation includes a border that's color-coordinated with the section type.</p>
+          <div class="bg-white/50 dark:bg-black/20 p-4 rounded-lg">
+            <code class="text-sm">
+              &lt;SectionBlock<br />
+              &nbsp;&nbsp;header="Example Header"<br />
+              &nbsp;&nbsp;subHeader="Example Subheader"<br />
+              &nbsp;&nbsp;sectionType="{sectionType}"<br />
+              &nbsp;&nbsp;withBorder={true}<br />
+              &gt;<br />
+              &nbsp;&nbsp;&lt;!-- Content --&gt;<br />
+              &lt;/SectionBlock&gt;
+            </code>
+          </div>
+        </div>
+      </SectionBlock>
+    ))}
+
+    <h2 class="text-2xl font-bold mt-8 mb-4">Custom Background Colors</h2>
+    
+    <SectionBlock 
+      header="Custom Background Color" 
+      subHeader='backgroundColorClass="bg-purple-200 dark:bg-purple-800"'
+      backgroundColorClass="bg-purple-200 dark:bg-purple-800"
+    >
+      <div class="max-w-3xl mx-auto">
+        <p class="mb-4">This section uses a custom background color class instead of a predefined section type.</p>
+        <div class="bg-white/50 dark:bg-black/20 p-4 rounded-lg">
+          <code class="text-sm">
+            &lt;SectionBlock<br />
+            &nbsp;&nbsp;header="Custom Background Color"<br />
+            &nbsp;&nbsp;subHeader="Example Subheader"<br />
+            &nbsp;&nbsp;backgroundColorClass="bg-purple-200 dark:bg-purple-800"<br />
+            &gt;<br />
+            &nbsp;&nbsp;&lt;!-- Content --&gt;<br />
+            &lt;/SectionBlock&gt;
+          </code>
+        </div>
+      </div>
+    </SectionBlock>
+
+    <SectionBlock 
+      header="Custom Border Color" 
+      subHeader='withBorder={true} borderColorClass="border-red-500 dark:border-red-300"'
+      backgroundColorClass="bg-white dark:bg-gray-800"
+      withBorder={true}
+      borderColorClass="border-red-500 dark:border-red-300"
+    >
+      <div class="max-w-3xl mx-auto">
+        <p class="mb-4">This section uses a custom border color class for distinctive styling.</p>
+        <div class="bg-white/50 dark:bg-black/20 p-4 rounded-lg">
+          <code class="text-sm">
+            &lt;SectionBlock<br />
+            &nbsp;&nbsp;header="Custom Border Color"<br />
+            &nbsp;&nbsp;subHeader="Example Subheader"<br />
+            &nbsp;&nbsp;backgroundColorClass="bg-white dark:bg-gray-800"<br />
+            &nbsp;&nbsp;withBorder={true}<br />
+            &nbsp;&nbsp;borderColorClass="border-red-500 dark:border-red-300"<br />
+            &gt;<br />
+            &nbsp;&nbsp;&lt;!-- Content --&gt;<br />
+            &lt;/SectionBlock&gt;
+          </code>
+        </div>
+      </div>
+    </SectionBlock>
+
+    <div class="mt-12 mb-8 text-center">
+      <p>Refer to <a href="/BACKGROUND_COLOR_SYSTEM.md" class="text-primarybutton-light dark:text-primarybutton-dark underline">BACKGROUND_COLOR_SYSTEM.md</a> for complete documentation.</p>
+    </div>
+
+    <h2 class="text-2xl font-bold mt-12 mb-4">Team Component Elements</h2>
+    <p class="mb-4 text-center">The Team section has specific color configurations for its elements, including cards and citations.</p>
+    
+    <SectionBlock header="Team Card Demo" subHeader="Shows the team member card with configurable colors" sectionType="team">
+      <div class="max-w-md mx-auto">
+        <TeamMember member={mockTeamMember} />
+        <div class="mt-8 bg-white/50 dark:bg-black/20 p-4 rounded-lg">
+          <h3 class="font-bold mb-2">Team Colors Configuration</h3>
+          <code class="text-sm block whitespace-pre-wrap">
+{`// Team card colors
+background: '${getColor('team.card.background')}' → 'dark:${getColor('team.card.darkModeBackground')}'
+shadow: '${getColor('team.card.shadow')}' → 'dark:${getColor('team.card.darkModeShadow')}'
+
+// Name colors
+color: '${getColor('team.name.color')}' → 'dark:${getColor('team.name.darkModeColor')}'
+
+// Title colors
+color: '${getColor('team.title.color')}' → 'dark:${getColor('team.title.darkModeColor')}'
+
+// Citation colors
+gradient: '${getColor('team.citation.gradientFrom')}' to '${getColor('team.citation.gradientTo')}'
+dark mode: '${getColor('team.citation.darkModeGradientFrom')}' to '${getColor('team.citation.darkModeGradientTo')}'
+text: '${getColor('team.citation.textColor')}' → 'dark:${getColor('team.citation.darkModeTextColor')}'`}
+          </code>
+        </div>
+      </div>
+
+    </SectionBlock>
+
+  </div>
+
+  <script>
+    // Simple dark mode toggle for demonstration purposes
+    const darkModeToggle = document.getElementById('toggle-dark-mode');
+    if (darkModeToggle) {
+      darkModeToggle.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+      });
+    }
+  </script>
+</body>
+</html>

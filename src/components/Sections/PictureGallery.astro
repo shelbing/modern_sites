@@ -1,0 +1,36 @@
+---
+import GridImage from "../Base/GridImage.astro";
+import SectionBlock from "../Base/SectionBlock.astro";
+
+const { blok } = Astro.props;
+const header = blok.Header;
+const subHeader = blok.Subheader;
+const rows = blok.Rows;
+const columns = blok.Columns;
+const images = blok.Images;
+---
+
+<!-- Optional custom background from Storyblok -->
+<SectionBlock 
+  header={header} 
+  subHeader={subHeader} 
+  sectionType="pictureGallery"
+  backgroundColorClass={blok.BackgroundColor}
+>
+  <div class={`grid-rows-${rows} grid-cols-${columns} grid gap-4 mt-8`}>
+    {
+      images.map(
+        (image: { Rows: number; Cols: number; Path: string; Alt: string; Caption: string; Link: string }) => (
+          <GridImage
+            rows={image.Rows}
+            cols={image.Cols}
+            path={image.Path}
+            alt={image.Alt}
+            caption={image.Caption}
+            link={image.Link}
+          />
+        )
+      )
+    }
+  </div>
+</SectionBlock>

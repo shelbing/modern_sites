@@ -1,0 +1,230 @@
+---
+import SectionBlock from '../Base/SectionBlock.astro';
+
+const { language } = Astro.props;
+
+const formFields = [
+  { 
+    name: 'firstName',
+    type: 'text',
+    required: true,
+    icon: 'mdi:account',
+    label: { en: 'First Name', es: 'Nombre', fr: 'Prénom', de: 'Vorname' },
+    placeholder: { en: 'John', es: 'Juan', fr: 'Jean', de: 'Max' }
+  },
+  { 
+    name: 'lastName', 
+    type: 'text', 
+    required: true,
+    icon: 'mdi:account',
+    label: { en: 'Last Name', es: 'Apellido', fr: 'Nom', de: 'Nachname' },
+    placeholder: { en: 'Doe', es: 'García', fr: 'Dupont', de: 'Mustermann' }
+  },
+  { 
+    name: 'email', 
+    type: 'email', 
+    required: true,
+    icon: 'mdi:email',
+    label: { en: 'Email', es: 'Correo electrónico', fr: 'Adresse e-mail', de: 'E-Mail' },
+    placeholder: { en: 'john@example.com', es: 'juan@ejemplo.com', fr: 'jean@exemple.com', de: 'max@beispiel.de' }
+  },
+  { 
+    name: 'phone', 
+    type: 'tel', 
+    required: true,
+    icon: 'mdi:phone',
+    label: { en: 'Phone', es: 'Teléfono', fr: 'Téléphone', de: 'Telefon' },
+    placeholder: { en: '+1 234 567 890', es: '+34 123 456 789', fr: '+33 1 23 45 67 89', de: '+49 123 4567890' }
+  },
+  { 
+    name: 'message', 
+    type: 'textarea', 
+    required: true,
+    icon: 'mdi:message',
+    label: { en: 'Message', es: 'Mensaje', fr: 'Message', de: 'Nachricht' },
+    placeholder: { 
+      en: 'How can we help you?', 
+      es: '¿Cómo podemos ayudarte?', 
+      fr: 'Comment pouvons-nous vous aider ?', 
+      de: 'Wie können wir Ihnen helfen?' 
+    }
+  },
+];
+
+const header = {
+  en: 'Contact Us',
+  es: 'Contáctenos',
+  fr: 'Contactez-nous',
+  de: 'Kontaktieren Sie uns'
+};
+
+const subHeader = {
+  en: 'We\'d love to hear from you!',
+  es: '¡Nos encantaría saber de usted!',
+  fr: 'Nous aimerions avoir de vos nouvelles!',
+  de: 'Wir würden uns freuen, von Ihnen zu hören!'
+};
+
+const submitButton = {
+  en: 'Send Message',
+  es: 'Enviar Mensaje',
+  fr: 'Envoyer le Message',
+  de: 'Nachricht senden'
+};
+
+const currentLang = language as keyof typeof header;
+
+---
+
+<SectionBlock header={header[currentLang]} subHeader={subHeader[currentLang]}>
+  <div class="max-w-3xl mx-auto">
+    <form id="contactForm" class="space-y-6" action="#" method="POST">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {formFields.slice(0, 4).map((field) => (
+          <div class="relative">
+            <label 
+              for={field.name} 
+              class="block text-sm font-medium text-text-light dark:text-text-dark mb-2"
+            >
+              {field.label[currentLang]}
+              {field.required && <span class="text-accent-light dark:text-accent-dark">*</span>}
+            </label>
+            <div class="relative">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                <span class={`iconify text-secondary-light dark:text-secondary-dark`} data-icon={field.icon}></span>
+              </span>
+              {field.type === 'textarea' ? (
+                <textarea
+                  name={field.name}
+                  id={field.name}
+                  placeholder={field.placeholder[currentLang]}
+                  rows="4"
+                  class="pl-10 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-text-light dark:text-text-dark rounded-lg focus:ring-2 focus:ring-secondary-light dark:focus:ring-secondary-dark focus:border-secondary-light dark:focus:border-secondary-dark"
+                  required={field.required}
+                ></textarea>
+              ) : (
+                <input
+                  type={field.type as 'text' | 'email' | 'tel'}
+                  name={field.name}
+                  id={field.name}
+                  placeholder={field.placeholder[currentLang]}
+                  class="pl-10 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-text-light dark:text-text-dark rounded-lg focus:ring-2 focus:ring-secondary-light dark:focus:ring-secondary-dark focus:border-secondary-light dark:focus:border-secondary-dark"
+                  required={field.required}
+                />
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Message Field */}
+      <div class="relative">
+        <label 
+          for="message" 
+          class="block text-sm font-medium text-text-light dark:text-text-dark mb-2"
+        >
+          {formFields[4].label[currentLang]}
+          <span class="text-accent-light dark:text-accent-dark">*</span>
+        </label>
+        <div class="relative">
+          <span class="absolute top-3 left-3 text-gray-400">
+            <span class="iconify text-secondary-light dark:text-secondary-dark" data-icon={formFields[4].icon}></span>
+          </span>
+          <textarea
+            id="message"
+            name="message"
+            rows="6"
+            placeholder={formFields[4].placeholder[currentLang]}
+            class="pl-10 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-text-light dark:text-text-dark rounded-lg focus:ring-2 focus:ring-secondary-light dark:focus:ring-secondary-dark focus:border-secondary-light dark:focus:border-secondary-dark p-2.5 transition duration-150 ease-in-out"
+            required={formFields[4].required}
+          ></textarea>
+        </div>
+      </div>
+
+      {/* Submit Button */}
+      <div class="flex justify-center">
+        <button
+          id="submitButton"
+          type="submit"
+          class="inline-flex items-center px-8 py-3 bg-secondary-light dark:bg-secondary-dark text-white rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-secondary-light dark:focus:ring-secondary-dark focus:ring-offset-2 transition-colors duration-200 group"
+        >
+          <span class="iconify mr-2 group-hover:scale-110 transition-transform duration-150" data-icon="mdi:send"></span>
+          {submitButton[currentLang]}
+        </button>
+      </div>
+    </form>
+
+    {/* Success Message (hidden by default) */}
+    <div id="successMessage" class="hidden mt-6 p-4 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-100 rounded-lg text-center">
+      <p class="flex items-center justify-center">
+        <span class="iconify mr-2" data-icon="mdi:check-circle"></span>
+        <span id="successText"></span>
+      </p>
+    </div>
+
+    {/* Error Message (hidden by default) */}
+    <div id="errorMessage" class="hidden mt-6 p-4 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-100 rounded-lg text-center">
+      <p class="flex items-center justify-center">
+        <span class="iconify mr-2" data-icon="mdi:alert-circle"></span>
+        <span id="errorText"></span>
+      </p>
+    </div>
+  </div>
+</SectionBlock>
+
+<script is:inline define:vars={{ formFields, currentLang, submitButton }}>
+  document.getElementById('contactForm').addEventListener('submit', async function(event) {
+    event.preventDefault();
+    
+    const submitButton = document.getElementById('submitButton');
+    const successMessage = document.getElementById('successMessage');
+    const errorMessage = document.getElementById('errorMessage');
+    const successText = document.getElementById('successText');
+    const errorText = document.getElementById('errorText');
+    
+    // Disable submit button and show loading state
+    submitButton.disabled = true;
+    submitButton.innerHTML = `
+      <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+      Sending...
+    `;
+
+    try {
+      const formData = new FormData(event.target);
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) throw new Error('Network response was not ok');
+
+      // Show success message
+      successMessage.classList.remove('hidden');
+      errorMessage.classList.add('hidden');
+      successText.textContent = 'Thank you for your message. We\'ll get back to you soon!';
+      event.target.reset();
+    } catch (error) {
+      // Show error message
+      errorMessage.classList.remove('hidden');
+      successMessage.classList.add('hidden');
+      errorText.textContent = 'Sorry, something went wrong. Please try again later.';
+    } finally {
+      // Reset submit button
+      submitButton.disabled = false;
+      submitButton.innerHTML = `
+        <span class="iconify mr-2" data-icon="mdi:send"></span>
+        ${submitButton[currentLang]}
+      `;
+    }
+  });
+</script>
+
+<script>
+  // Load Iconify
+  const script = document.createElement('script');
+  script.src = "https://code.iconify.design/3/3.1.0/iconify.min.js";
+  document.head.appendChild(script);
+</script>

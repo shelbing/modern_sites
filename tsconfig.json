@@ -1,0 +1,8 @@
+{
+  "extends": "@tsconfig/svelte/tsconfig.json",
+  "compilerOptions": {
+    "allowArbitraryExtensions": true,
+    "noEmitOnError": false
+  },
+  "exclude": ["node_modules", "**/*.spec.ts", "src/pages/api/ibe/confirm_booking.ts"]
+}

@@ -1,0 +1,27 @@
+---
+
+---
+
+<script>
+  import "flowbite";
+
+  // If you need to reinitialize Flowbite (e.g., after dynamic content changes)
+  document.addEventListener("astro:page-load", () => {
+    initFlowbite();
+  });
+
+  function initFlowbite() {
+    if (typeof window.initFlowbite === "function") {
+      window.initFlowbite();
+    }
+  }
+
+  // Initialize Flowbite when the script loads
+  initFlowbite();
+
+  declare global {
+    interface Window {
+      initFlowbite: () => void;
+    }
+  }
+</script>

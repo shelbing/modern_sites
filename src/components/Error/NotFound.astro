@@ -1,0 +1,66 @@
+---
+/**
+ * Language-aware 404 Not Found component
+ * Detects language from URL path and displays appropriate text
+ * Uses SectionBlock as a wrapper for consistent styling
+ */
+
+import SectionBlock from '../Base/SectionBlock.astro';
+
+// Props interface
+interface Props {
+  lang?: string; // Optional language code (defaults to 'en' if not provided)
+}
+
+// Get language from props (default to 'en')
+const { lang = 'en' } = Astro.props;
+
+// Text content by language
+const content = {
+  de: {
+    title: '404',
+    subtitle: 'Seite nicht gefunden',
+    message: 'Es tut uns leid, die gesuchte Seite existiert nicht oder wurde verschoben.',
+    buttonText: 'Zurück zur Startseite'
+  },
+  en: {
+    title: '404',
+    subtitle: 'Page Not Found',
+    message: 'We\'re sorry, the page you were looking for doesn\'t exist or has been moved.',
+    buttonText: 'Return to Homepage'
+  },
+  fr: {
+    title: '404',
+    subtitle: 'Page Non Trouvée',
+    message: 'Nous sommes désolés, la page que vous recherchez n\'existe pas ou a été déplacée.',
+    buttonText: 'Retour à l\'Accueil'
+  },
+  es: {
+    title: '404',
+    subtitle: 'Página No Encontrada',
+    message: 'Lo sentimos, la página que estabas buscando no existe o ha sido movida.',
+    buttonText: 'Volver a la Página Principal'
+  }
+};
+
+// Get content for specified language (fallback to English if language not supported)
+const textContent = content[lang as keyof typeof content] || content.en;
+---
+
+<SectionBlock 
+  header={textContent.title} 
+  subHeader={textContent.subtitle}
+  sectionType="default"
+  centered={true}
+  backgroundColorClass="bg-paper-light dark:bg-paper-dark !my-2 md:!my-2 lg:!my-2"
+>
+  <div class="flex flex-col items-center justify-center py-4 md:py-6 lg:py-6">
+    <p class="text-body-lg mb-4 md:mb-6 lg:mb-6 text-text-light dark:text-text-dark max-w-xl">
+      {textContent.message}
+    </p>
+    
+    <a href={`/${lang === 'en' ? '' : lang}`} class="px-6 py-3 bg-primarybutton-light text-primarybuttontext-light dark:bg-primarybutton-dark dark:text-primarybuttontext-dark rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-accent-light dark:focus:ring-accent-dark focus:ring-offset-2 transition-all duration-200 shadow-md">
+      {textContent.buttonText}
+    </a>
+  </div>
+</SectionBlock>

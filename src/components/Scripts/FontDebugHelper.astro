@@ -1,0 +1,136 @@
+---
+/**
+ * Font Debug Helper Component
+ * 
+ * This component provides comprehensive font loading debugging tools
+ * and helps diagnose font loading issues.
+ */
+
+// Font debugging explicitly disabled
+const debug = false;
+---
+
+{debug && (
+  <div id="font-debug-panel" class="fixed top-0 right-0 bg-white dark:bg-gray-800 text-xs p-2 rounded-bl-md shadow-md z-50 opacity-70 hover:opacity-100 max-w-xs overflow-auto max-h-screen">
+    <h3 class="font-bold mb-2">Font Debug Panel</h3>
+    <div id="font-debug-content">Loading font information...</div>
+    <button id="refresh-fonts" class="mt-2 px-2 py-1 bg-blue-500 text-white rounded text-xs">Refresh</button>
+    <button id="toggle-panel" class="mt-2 ml-2 px-2 py-1 bg-gray-500 text-white rounded text-xs">Minimize</button>
+  </div>
+)}
+
+{debug && (
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('FontDebugHelper: Initializing font debugging tools');
+      
+      const debugPanel = document.getElementById('font-debug-panel');
+      const debugContent = document.getElementById('font-debug-content');
+      const refreshButton = document.getElementById('refresh-fonts');
+      const toggleButton = document.getElementById('toggle-panel');
+      
+      if (!debugPanel || !debugContent) return;
+      
+      // Function to check font loading status
+      const checkFontStatus = () => {
+        if (!debugContent) return;
+        
+        let html = '<ul class="list-disc pl-4">';
+        
+        // Check document.fonts status
+        html += `<li>Document fonts status: <span class="${document.fonts.status === 'loaded' ? 'text-green-500' : 'text-red-500'}">${document.fonts.status}</span></li>`;
+        
+        // Get CSS variables for fonts
+        const computedStyle = getComputedStyle(document.documentElement);
+        const headingVar = computedStyle.getPropertyValue('--font-family-heading').trim();
+        const bodyVar = computedStyle.getPropertyValue('--font-family-body').trim();
+        
+        html += `<li>CSS Heading font: <span class="font-mono text-xs break-all">${headingVar}</span></li>`;
+        html += `<li>CSS Body font: <span class="font-mono text-xs break-all">${bodyVar}</span></li>`;
+        
+        // Extract actual font names (remove quotes and get first font)
+        const headingFont = headingVar.replace(/["']/g, '').split(',')[0].trim();
+        const bodyFont = bodyVar.replace(/["']/g, '').split(',')[0].trim();
+        
+        // Check if fonts are loaded
+        let headingLoaded = false;
+        let bodyLoaded = false;
+        
+        try {
+          if (document.fonts && document.fonts.check) {
+            headingLoaded = document.fonts.check(`1em "${headingFont}"`);
+            bodyLoaded = document.fonts.check(`1em "${bodyFont}"`);
+          }
+        } catch (e) {
+          html += `<li class="text-red-500">Error checking fonts: ${e.message}</li>`;
+        }
+        
+        html += `<li>Heading font "${headingFont}": <span class="${headingLoaded ? 'text-green-500' : 'text-red-500'}">${headingLoaded ? 'Loaded' : 'Not loaded'}</span></li>`;
+        html += `<li>Body font "${bodyFont}": <span class="${bodyLoaded ? 'text-green-500' : 'text-red-500'}">${bodyLoaded ? 'Loaded' : 'Not loaded'}</span></li>`;
+        
+        // List all font links
+        const fontLinks = document.querySelectorAll('link[rel="stylesheet"][href*="fonts.googleapis.com"]');
+        html += `<li>Google Font links: ${fontLinks.length}</li>`;
+        if (fontLinks.length > 0) {
+          html += '<ul class="list-disc pl-4">';
+          fontLinks.forEach((link, index) => {
+            html += `<li class="break-all">Link #${index + 1}: <span class="font-mono text-xs">${link.href.substring(0, 50)}...</span></li>`;
+          });
+          html += '</ul>';
+        }
+        
+        // List all loaded fonts
+        if (document.fonts && document.fonts.forEach) {
+          const loadedFonts = [];
+          document.fonts.forEach(font => {
+            loadedFonts.push({
+              family: font.family,
+              status: font.status,
+              loaded: font.status === 'loaded'
+            });
+          });
+          
+          html += `<li>All fonts (${loadedFonts.length}):</li>`;
+          html += '<ul class="list-disc pl-4 max-h-40 overflow-y-auto">';
+          loadedFonts.forEach(font => {
+            html += `<li>${font.family}: <span class="${font.loaded ? 'text-green-500' : 'text-red-500'}">${font.status}</span></li>`;
+          });
+          html += '</ul>';
+        }
+        
+        html += '</ul>';
+        
+        // Add timestamp
+        html += `<div class="text-xs text-gray-500 mt-2">Last updated: ${new Date().toLocaleTimeString()}</div>`;
+        
+        debugContent.innerHTML = html;
+      };
+      
+      // Check font status initially
+      setTimeout(checkFontStatus, 500);
+      
+      // Add refresh button functionality
+      if (refreshButton) {
+        refreshButton.addEventListener('click', checkFontStatus);
+      }
+      
+      // Add toggle button functionality
+      if (toggleButton && debugPanel && debugContent) {
+        toggleButton.addEventListener('click', () => {
+          if (debugContent.style.display === 'none') {
+            debugContent.style.display = 'block';
+            toggleButton.textContent = 'Minimize';
+          } else {
+            debugContent.style.display = 'none';
+            toggleButton.textContent = 'Expand';
+          }
+        });
+      }
+      
+      // Check again when everything is loaded
+      window.addEventListener('load', () => {
+        setTimeout(checkFontStatus, 1000);
+      });
+    });
+  </script>
+)}

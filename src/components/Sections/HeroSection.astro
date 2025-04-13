@@ -1,0 +1,99 @@
+---
+/**
+ * HeroSection Component
+ *
+ * This component renders a hero section with either a background image or a video.
+ * It displays a main text and a subtitle over the background.
+ * The component is responsive and adapts to different screen sizes.
+ * It also includes a fallback mechanism for browsers that don't support video playback.
+ *
+ * Uses centralized color configuration from /src/config/colors.js
+ */
+
+/**
+ * Interface defining the structure of the props expected by the HeroSection component.
+ */
+interface HeroSectionProps {
+  blok: {
+    Text: string; // Main text to be displayed in the hero section
+    Image_URL: string; // URL of the background image
+    SubHeader: string; // Subtitle or secondary text
+    Video_URL?: string; // Optional URL for a background video
+  };
+}
+
+// Destructure the props and assign types
+const { blok } = Astro.props as HeroSectionProps;
+
+// Extract individual properties from the blok
+const heroText = blok.Text;
+const imageURL = blok.Image_URL;
+const heroSubTitle = blok.SubHeader;
+const videoURL = blok.Video_URL;
+
+// No longer using dynamic color classes - using hardcoded Tailwind classes instead
+
+// Always prepare the background image style
+const bgStyle = { backgroundImage: `url(${imageURL})` };
+
+// For reference, we're using direct Tailwind classes for the hero section instead of
+// dynamically generated ones to ensure proper handling of multi-hyphenated color names
+---
+
+<section
+  class="h-screen
+  max-h-[300px] sm:max-h-[400px] bg-bottom md:max-h-[500px] lg:max-h-[600px] xl:max-h-[700px] 2xl:max-h-[800px] bg-no-repeat bg-cover object-cover object-bottom bg-background-light dark:bg-background-dark rounded-2xl shadow-md overflow-hidden my-4 relative"
+  style={bgStyle}
+>
+  {
+    videoURL && (
+      <video
+        class="absolute inset-0 w-full h-full object-cover rounded-2xl"
+        autoplay
+        loop
+        muted
+        playsinline
+      >
+        <source src={videoURL} type="video/mp4" />
+      </video>
+    )
+  }
+  <div class="relative max-w-sm sm:max-w-max py-8 lg:py-16 xl:px-0 z-5">
+    <div class="mt-8 mb-6 lg:mb-0 ml-4 lg:ml-8 flex flex-col items-start">
+      <span
+        class="inline-block bg-hero-background-light bg-opacity-85 dark:bg-hero-background-dark dark:bg-opacity-90 text-hero-text-light dark:text-hero-text-dark mb-6 text-2xl font-bold font-serif lg:mb-8 md:text-3xl lg:text-5xl leading-snug"
+      >
+        <span class="px-1">{heroText}</span>
+      </span>
+      <span
+        class="inline-block bg-hero-background-light bg-opacity-85 dark:bg-hero-background-dark dark:bg-opacity-85 text-hero-text-light dark:text-hero-text-dark mb-6 font-bold font-serif lg:mb-8 md:text-lg lg:text-3xl leading-snug"
+      >
+        <span class="px-1">{heroSubTitle}</span>
+      </span>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Check if video playback is supported
+  function checkVideoSupport() {
+    const testVideo = document.createElement("video");
+    return !!(
+      testVideo.canPlayType &&
+      testVideo.canPlayType("video/mp4").replace(/no/, "")
+    );
+  }
+
+  // Function to handle video fallback
+  function handleVideoFallback() {
+    if (!checkVideoSupport()) {
+      const videoElement = document.querySelector("video");
+      if (videoElement) {
+        videoElement.style.display = "none";
+      }
+    }
+  }
+
+  // Run the fallback check when the DOM is loaded
+  document.addEventListener("DOMContentLoaded", handleVideoFallback);
+</script>

@@ -1,0 +1,78 @@
+---
+import { useStoryblokApi } from '@storyblok/astro'
+import StoryblokComponent from '@storyblok/astro/StoryblokComponent.astro'
+import Layout from '../layouts/Layout.astro';
+import { loadEnv } from "vite";
+import Loading from '../components/Base/Loading.astro'
+const storyblokApi = useStoryblokApi();
+
+let hotel = loadEnv("", process.cwd(), "PROPERTY").PROPERTY;
+
+// No prerender directive here - we'll handle this in getStaticPaths
+
+export async function getStaticPaths() {
+    // In SSR mode, return an empty array so no pages are prerendered
+    if (process.env.SSR_MODE === 'true') {
+        return [];
+    }
+    const property=loadEnv("", process.cwd(), "PROPERTY").PROPERTY;
+    const preview = (import.meta.env.VERCEL_ENV === 'preview');
+    const isLocalhost = (import.meta.env.DEV && process.env.NODE_ENV === 'development');
+    const languages=['de','en','fr','es']
+    const storyblokApi = useStoryblokApi();
+    const links = await storyblokApi.getAll('cdn/links', {
+        version: (preview || isLocalhost) ? "draft" : "published",
+    });
+    const szsLinks = links.filter(link => link.real_path.startsWith('/'+property+'/')&&link.is_folder === false)
+    .map(link => ({
+        ...link,
+        real_path: link.real_path.replace('/'+property+'/', '')
+    }));
+    const components = szsLinks.map(link => link.real_path);
+    var paths = components.map(component => {
+    return languages.map(lang => {
+        return { params: { path: `${lang}/${component}` } }
+    })
+}).flat();
+paths = paths.filter(path => !path.params.path.toLowerCase().includes("grunddaten"));
+return paths;
+}
+
+const {path}=Astro.params
+const lang = path.substring(0, 2)
+const story = path.substring(3)
+
+let content
+let pageTitle = "TITLE MISSING" // Default title if not found
+
+try {
+    const { data } = await storyblokApi.get('cdn/stories/'+hotel+'/'+story, {
+        language:lang,
+        version: import.meta.env.DEV ? "draft" : "published",
+    });
+    content = data.story.content;
+    
+    // Set the page title from Storyblok's Title field if it exists and isn't empty
+    if (content.Title && content.Title.trim() !== "") {
+        pageTitle = content.Title;
+    }
+} catch (error) {
+    console.error(error);
+    // Do not proceed with rendering the StoryblokComponent if there was an error
+    // This prevents the "blok prop is undefined" error
+}
+---
+<Layout title={pageTitle}>
+    <Loading/>
+    {content ? (
+        <StoryblokComponent language={lang} blok={content} />
+    ) : (
+        <div class="container mx-auto py-16 px-4">
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 max-w-2xl mx-auto">
+                <h1 class="text-h1 text-primary-dark dark:text-primary-light mb-4">Content Not Found</h1>
+                <p class="text-body-lg mb-6">The requested content could not be found. It may have been moved or deleted.</p>
+                <a href="/" class="inline-block bg-secondary-dark hover:bg-secondary-darker text-white font-semibold py-2 px-4 rounded transition-colors duration-200">Return to Homepage</a>
+            </div>
+        </div>
+    )}
+</Layout>

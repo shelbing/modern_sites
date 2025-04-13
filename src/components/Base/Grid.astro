@@ -1,0 +1,59 @@
+---
+/**
+ * Grid Component
+ * 
+ * This component creates a responsive grid layout with customizable rows, columns, and gap.
+ * It's designed to work with Storyblok CMS and supports dynamic content rendering.
+ * 
+ * Features:
+ * - Customizable grid layout (rows, columns, gap)
+ * - Responsive design with Tailwind classes
+ * - Dark mode support
+ * - Dynamic content rendering from Storyblok
+ * - Customizable header and subheader
+ * 
+ * Props:
+ * - blok: Storyblok content object
+ * - language: Current language for internationalization
+ * 
+ * Usage:
+ * <Grid blok={storyblokData} language={currentLanguage} />
+ */
+
+import { type SbBlokData } from '@storyblok/astro'
+import StoryblokComponent from "@storyblok/astro/StoryblokComponent.astro";
+
+interface Props {
+    blok: {
+        rows: number;
+        cols: number;
+        Header: string;
+        SubHeader: string;
+        Gap: number;
+        Items: SbBlokData[];
+    };
+    language: string;
+}
+
+const { blok, language } = Astro.props;
+const { rows, cols, Header: header, SubHeader: subHeader, Gap: gap, Items } = blok;
+
+const gridClassName = `grid bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark gap-${gap} grid-rows-${rows} grid-cols-${cols}`;
+---
+<section class="bg-background-light dark:bg-background-dark">
+    <div class="py-8 px-4 mx-auto max-w-screen-xl lg:px-12 sm:text-center lg:py-16">
+        <h2 class="mb-4 text-4xl tracking-tight font-extrabold text-sectionheader-light dark:text-sectionheader-dark">
+            {header}
+        </h2>
+        
+        <p class="font-light sm:text-lg md:px-20 lg:px-38 xl:px-48 text-sectionsubheader-light dark:text-sectionsubheader-dark mb-4">
+            {subHeader}
+        </p>
+        
+        <div class={gridClassName}>
+            {Items.map((item: SbBlokData) => (
+                <StoryblokComponent language={language} blok={item} />
+            ))}
+        </div>
+    </div>
+</section>

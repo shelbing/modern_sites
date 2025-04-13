@@ -1,0 +1,188 @@
+---
+/**
+ * SliderSection Component
+ *
+ * This component creates a responsive slider section with auto-sliding and touch support.
+ * It's designed to work with Astro's view transitions and Storyblok components.
+ *
+ * Features:
+ * - Auto-sliding with pause on hover
+ * - Touch support for mobile devices
+ * - Navigation buttons
+ * - Customizable height
+ * - Dark mode support
+ *
+ * Props:
+ * - blok: An object containing section data from Storyblok CMS
+ * - language: The current language code
+ *
+ * Usage:
+ * <SliderSection blok={sectionData} language={currentLanguage} />
+ */
+
+import { type SbBlokData } from "@storyblok/astro";
+import StoryblokComponent from "@storyblok/astro/StoryblokComponent.astro";
+
+const { blok, language } = Astro.props;
+const header = blok.Header;
+const subHeader = blok.Subheader;
+const content = blok.Content;
+const height = blok.Height;
+console.log(height);
+---
+
+<section class="bg-background-light dark:bg-background-dark">
+  <div class="px-4 mx-auto max-w-screen-xl lg:px-12 sm:text-center py-4">
+    <h2
+      class="mb-4 text-4xl tracking-tight font-extrabold text-text-light dark:text-text-dark"
+    >
+      {header}
+    </h2>
+    <p
+      class="font-light text-text-light sm:text-lg md:px-20 lg:px-38 xl:px-48 dark:text-text-dark"
+    >
+      {subHeader}
+    </p>
+    <div class="custom-slider relative overflow-hidden pt-4">
+      <div
+        class="slider-container flex transition-transform duration-800 ease-in-out"
+        style={`height:${height}px`}
+      >
+        {
+          content.map((blok: SbBlokData) => (
+            <div class="slide flex-shrink-0 w-full">
+              <StoryblokComponent language={language} blok={blok} />
+            </div>
+          ))
+        }
+      </div>
+      <button
+        class="slider-btn prev absolute top-1/2 left-4 transform -translate-y-1/2 bg-white bg-opacity-50 p-2 rounded-full"
+        >&lt;</button
+      >
+      <button
+        class="slider-btn next absolute top-1/2 right-4 transform -translate-y-1/2 bg-white bg-opacity-50 p-2 rounded-full"
+        >&gt;</button
+      >
+    </div>
+  </div>
+</section>
+
+<style>
+  .custom-slider {
+    width: 100%;
+  }
+  .slider-container {
+    width: 100%;
+  }
+  .slide {
+    width: 100%;
+  }
+</style>
+
+<script>
+  // Function to set up the slider functionality
+  function setupSlider() {
+    const slider = document.querySelector(".custom-slider");
+    if (!slider) return;
+
+    const sliderContainer = slider.querySelector(".slider-container");
+    const slides =
+      (sliderContainer?.querySelectorAll(
+        ".slide"
+      ) as NodeListOf<HTMLElement>) || []; // Ensure slides is an array
+    const prevBtn = slider.querySelector(".prev");
+    const nextBtn = slider.querySelector(".next");
+
+    if (!sliderContainer || !slides || !prevBtn || !nextBtn) return;
+
+    let currentIndex = 0;
+    let intervalId: ReturnType<typeof setInterval>; // Use ReturnType to correctly type intervalId
+
+    function updateSlider() {
+      if (!sliderContainer) return; // Check if sliderContainer is not null
+      const offset = -currentIndex * 100;
+      (sliderContainer as HTMLElement).style.transform =
+        `translateX(${offset}%)`; // Cast to HTMLElement
+    }
+
+    function showPrevSlide() {
+      if (!slides.length) return; // Check if slides is not empty
+      currentIndex = (currentIndex - 1 + slides.length) % slides.length;
+      updateSlider();
+    }
+
+    function showNextSlide() {
+      if (!slides.length) return; // Check if slides is not empty
+      currentIndex = (currentIndex + 1) % slides.length;
+      updateSlider();
+    }
+
+    function startAutoSlide() {
+      intervalId = setInterval(showNextSlide, 10000);
+    }
+
+    function stopAutoSlide() {
+      clearInterval(intervalId);
+    }
+
+    prevBtn.addEventListener("click", () => {
+      showPrevSlide();
+      stopAutoSlide();
+      startAutoSlide();
+    });
+
+    nextBtn.addEventListener("click", () => {
+      showNextSlide();
+      stopAutoSlide();
+      startAutoSlide();
+    });
+
+    // Touch support for mobile devices
+    let startX: number;
+    let isDragging = false;
+
+    (sliderContainer as HTMLElement).addEventListener(
+      "touchstart",
+      (e: TouchEvent) => {
+        startX = e.touches[0].clientX;
+        isDragging = true;
+        stopAutoSlide();
+      }
+    );
+
+    sliderContainer.addEventListener("touchmove", (e: Event) => {
+      const touchEvent = e as TouchEvent; // Cast to TouchEvent
+      if (!isDragging) return;
+      const currentX = touchEvent.touches[0].clientX;
+      const diff = startX - currentX;
+      if (Math.abs(diff) > 50) {
+        // Threshold for slide change
+        if (diff > 0) {
+          showNextSlide();
+        } else {
+          showPrevSlide();
+        }
+        isDragging = false;
+      }
+    });
+
+    sliderContainer.addEventListener("touchend", () => {
+      isDragging = false;
+      startAutoSlide();
+    });
+
+    // Start auto-sliding
+    startAutoSlide();
+
+    // Pause auto-sliding when mouse is over the slider
+    slider.addEventListener("mouseenter", stopAutoSlide);
+    slider.addEventListener("mouseleave", startAutoSlide);
+  }
+
+  // Run the setup function when the DOM is loaded
+  document.addEventListener("DOMContentLoaded", setupSlider);
+
+  // If you're using Astro's view transitions, also run the setup after page transitions
+  document.addEventListener("astro:after-swap", setupSlider);
+</script>

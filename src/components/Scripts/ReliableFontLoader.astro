@@ -1,0 +1,122 @@
+---
+/**
+ * Reliable Font Loader Component
+ * 
+ * This component ensures that fonts are loaded reliably by:
+ * 1. Using proper preconnect links
+ * 2. Setting CSS variables directly with JavaScript
+ * 3. Using a hidden element to force font loading
+ * 4. Providing comprehensive debugging
+ */
+
+import fontCombinations from '../../config/fontCombinations';
+import { getSelectedFontCombination } from '../../config/fontCombinations';
+
+const selectedFontCombination = getSelectedFontCombination();
+const debug = false; // Disabled debugging regardless of environment or props
+const fontIndices = Astro.props.fontIndices || [];
+
+// Determine which fonts to load
+let fontsToLoad = [selectedFontCombination];
+
+// If fontIndices is provided, load those specific fonts
+if (fontIndices.length > 0) {
+  fontsToLoad = fontIndices.map((index: number) => fontCombinations[index - 1]).filter(Boolean);
+  if (debug) {
+    console.log(`ReliableFontLoader: Loading ${fontsToLoad.length} fonts from indices: [${fontIndices.join(', ')}]`);
+  }
+}
+
+// Log font information
+if (debug) {
+  console.log(`ReliableFontLoader: Using font combination: ${selectedFontCombination.name}`);
+  console.log(`ReliableFontLoader: Heading font: ${selectedFontCombination.heading}`);
+  console.log(`ReliableFontLoader: Body font: ${selectedFontCombination.body}`);
+}
+
+// Create a combined Google Fonts URL for all fonts to load
+const allGoogleFontsUrls = [...new Set(fontsToLoad.map(font => font.googleFontsUrl))];
+
+---
+
+<!-- Font loading links -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+{allGoogleFontsUrls.map(url => (
+  <link 
+    href={url} 
+    rel="stylesheet"
+    onload="console.log('ReliableFontLoader: Font stylesheet loaded successfully')"
+    onerror="console.error('ReliableFontLoader: Error loading font stylesheet')"
+  >
+))}
+
+<!-- Force font loading with a hidden element -->
+<div style="position: absolute; visibility: hidden; font-size: 0; height: 0; width: 0; overflow: hidden;">
+  {fontsToLoad.map(font => (
+    <>
+      <span style={`font-family: "${font.heading}", serif;`}>Font preload</span>
+      <span style={`font-family: "${font.body}", sans-serif;`}>Font preload</span>
+    </>
+  ))}
+</div>
+
+<!-- Debug info (only visible when debug is true) -->
+{debug && (
+  <div class="fixed top-0 left-0 bg-white dark:bg-gray-800 text-xs p-2 rounded-br-md shadow-md z-50 opacity-70 hover:opacity-100">
+    <p>Font: {selectedFontCombination.name}</p>
+    <p>Heading: {selectedFontCombination.heading}</p>
+    <p>Body: {selectedFontCombination.body}</p>
+  </div>
+)}
+
+<!-- Script to set CSS variables directly -->
+<script is:inline define:vars={{ 
+  headingFont: selectedFontCombination.heading, 
+  bodyFont: selectedFontCombination.body,
+  debug: debug
+}}>
+  // Set CSS variables directly in JavaScript
+  document.documentElement.style.setProperty('--font-family-heading', `"${headingFont}", serif`);
+  document.documentElement.style.setProperty('--font-family-body', `"${bodyFont}", sans-serif`);
+  
+  if (debug) {
+    console.log(`ReliableFontLoader: Set CSS variable --font-family-heading = "${headingFont}, serif"`);
+    console.log(`ReliableFontLoader: Set CSS variable --font-family-body = "${bodyFont}, sans-serif"`);
+  }
+  
+  // Function to check font loading status
+  const checkFontLoading = () => {
+    if (document.fonts && document.fonts.check) {
+      try {
+        const headingLoaded = document.fonts.check(`1em "${headingFont}"`);
+        const bodyLoaded = document.fonts.check(`1em "${bodyFont}"`);
+        
+        if (debug) {
+          console.log(`ReliableFontLoader: Heading font "${headingFont}" loaded: ${headingLoaded}`);
+          console.log(`ReliableFontLoader: Body font "${bodyFont}" loaded: ${bodyLoaded}`);
+        }
+        
+        // Apply a class to the body when fonts are loaded
+        if (headingLoaded && bodyLoaded) {
+          document.body.classList.add('fonts-loaded');
+          if (debug) console.log('ReliableFontLoader: All fonts loaded successfully');
+        } else {
+          if (debug) console.warn('ReliableFontLoader: Some fonts failed to load');
+        }
+      } catch (error) {
+        if (debug) console.error('ReliableFontLoader: Error checking font loading:', error);
+      }
+    }
+  };
+  
+  // Check font loading after a delay
+  if (document.readyState === 'complete') {
+    setTimeout(checkFontLoading, 500);
+  } else {
+    window.addEventListener('load', () => {
+      setTimeout(checkFontLoading, 500);
+    });
+  }
+</script>

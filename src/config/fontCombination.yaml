@@ -1,0 +1,10 @@
+# Font Configuration for Hotel Stern
+# 
+# This file contains font selection configuration for the hotel website.
+# Moving this to YAML allows for easier configuration without modifying code.
+
+# Selected font combination (1-23)
+selectedFontCombination: 7
+
+# Debug mode
+debugFonts: false

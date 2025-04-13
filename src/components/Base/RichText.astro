@@ -1,0 +1,19 @@
+---
+import { renderRichText } from '@storyblok/astro'
+
+const { blok } = Astro.props;
+import SectionBlock from './SectionBlock.astro';
+const header = blok.Header
+const subHeader = blok.SubHeader
+const text = renderRichText(blok.Text);
+---
+<SectionBlock header={header} subHeader={subHeader}>
+        <div class="font-sans rich-text text-text-light dark:text-text-dark hyphens-auto text-rich-desktop md:text-rich-tablet sm:text-rich-mobile" set:html={text}></div>
+</SectionBlock>
+
+<style>
+    .rich-text :global(p) {
+        text-align: justify !important;
+        margin-bottom: 1.2rem;
+    }
+</style>

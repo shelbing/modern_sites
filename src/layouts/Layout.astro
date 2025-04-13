@@ -1,0 +1,45 @@
+---
+import FlowbiteScript from '../components/Scripts/FlowbiteScript.astro';
+import '../styles/main.css';
+import '../styles/custom-fonts.css';
+import MenuBar from '../components/MenuBar/MenuBar.astro';
+import Footer from '../components/Sections/Footer.astro';
+import PlausibleSnippet from '../components/Scripts/PlausibleSnippet.astro';
+import ReliableFontLoader from '../components/Scripts/ReliableFontLoader.astro';
+import FontSizes from '../components/Scripts/FontSizes.astro';
+const isPreview = import.meta.env.PREVIEW === 'true';
+var titlehelper=""
+if (isPreview) {
+	titlehelper=" - Preview"
+}
+interface Props {
+	title: string;
+}
+
+const { title } = Astro.props;
+
+// Add debugging flag - disabled
+const showFontDebug = false;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<ReliableFontLoader debug={showFontDebug} />
+		<FontSizes />
+		<meta name="description" content="Hotel homepage" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}{titlehelper}</title>
+
+	</head>
+	<body class="dark:bg-background-dark bg-background-light font-sans">
+		<MenuBar/>
+		<slot />
+		<Footer/>
+		<FlowbiteScript />
+		<PlausibleSnippet />
+	</body>
+</html>

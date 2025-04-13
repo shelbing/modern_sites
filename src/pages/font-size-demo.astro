@@ -1,0 +1,141 @@
+---
+/**
+ * Font Size Demo Page
+ * 
+ * This page demonstrates the centralized font size system in action.
+ * It showcases all available font sizes and how to use them.
+ */
+import Layout from '../layouts/Layout.astro';
+import FontSizeExample from '../components/Examples/FontSizeExample.astro';
+import fontSizes from '../config/fontSizes.js';
+
+// Get all font sizes for display
+
+// Define types for the function
+interface FontSizeItem {
+  key: string;
+  value: string;
+  cssVar: string;
+}
+
+// Function to flatten nested font size objects for display
+function flattenFontSizes(obj: Record<string, any>, prefix = ''): FontSizeItem[] {
+  let result: FontSizeItem[] = [];
+  
+  for (const key in obj) {
+    const newPrefix = prefix ? `${prefix}.${key}` : key;
+    
+    if (typeof obj[key] === 'object' && obj[key] !== null) {
+      // Recursively process nested objects
+      const nested = flattenFontSizes(obj[key], newPrefix);
+      result = [...result, ...nested];
+    } else {
+      // Add the font size to the result
+      result.push({
+        key: newPrefix,
+        value: obj[key],
+        cssVar: `--font-size-${newPrefix.replace(/\./g, '-')}`
+      });
+    }
+  }
+  
+  return result;
+}
+
+// Get flattened font sizes for display
+const flattenedFontSizes = flattenFontSizes(fontSizes);
+---
+
+<Layout title="Font Size System Demo">
+  <main class="container mx-auto py-8 px-4">
+    <h1 class="text-h1 mb-6">Font Size System Demo</h1>
+    
+    <section class="mb-12">
+      <h2 class="text-h2 mb-4">Available Font Sizes</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {flattenedFontSizes.map(size => (
+          <div class="bg-background-light dark:bg-background-dark p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div class="font-bold">{size.key}</div>
+            <div class="text-gray-600 dark:text-gray-300 text-sm">
+              Value: {size.value}
+            </div>
+            <div class="text-gray-600 dark:text-gray-300 text-sm">
+              CSS Variable: var({size.cssVar})
+            </div>
+            <div class="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded">
+              <span style={`font-size: ${size.value};`}>Sample Text</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+    
+    <section class="mb-12">
+      <h2 class="text-h2 mb-4">Usage Examples</h2>
+      <FontSizeExample />
+    </section>
+    
+    <section class="mb-12">
+      <h2 class="text-h2 mb-4">Heading Hierarchy</h2>
+      
+      <div class="bg-background-light dark:bg-background-dark p-6 rounded-lg shadow-md">
+        <h1>Heading 1 (h1)</h1>
+        <h2>Heading 2 (h2)</h2>
+        <h3>Heading 3 (h3)</h3>
+        <h4>Heading 4 (h4)</h4>
+        <h5>Heading 5 (h5)</h5>
+        <h6>Heading 6 (h6)</h6>
+      </div>
+    </section>
+    
+    <section class="mb-12">
+      <h2 class="text-h2 mb-4">Body Text Sizes</h2>
+      
+      <div class="bg-background-light dark:bg-background-dark p-6 rounded-lg shadow-md grid gap-4">
+        <p class="text-body-xs">Extra Small Text (body.xs)</p>
+        <p class="text-body-sm">Small Text (body.sm)</p>
+        <p class="text-body-base">Base Text (body.base)</p>
+        <p class="text-body-lg">Large Text (body.lg)</p>
+        <p class="text-body-xl">Extra Large Text (body.xl)</p>
+      </div>
+    </section>
+    
+    <section class="mb-12">
+      <h2 class="text-h2 mb-4">Special Element Sizes</h2>
+      
+      <div class="bg-background-light dark:bg-background-dark p-6 rounded-lg shadow-md grid gap-4">
+        <button class="button bg-primarybutton-light text-primarybuttontext-light dark:bg-primarybutton-dark dark:text-primarybuttontext-dark px-4 py-2 rounded">
+          Button Text
+        </button>
+        
+        <div class="caption text-gray-600 dark:text-gray-400">
+          Caption Text
+        </div>
+        
+        <label class="label block">
+          Form Label
+        </label>
+        
+        <div class="price text-price-light dark:text-price-dark font-bold">
+          €199
+        </div>
+        
+        <span class="badge bg-accent-light dark:bg-accent-dark text-white px-2 py-1 rounded-full inline-block">
+          Badge Text
+        </span>
+      </div>
+    </section>
+    
+    <section>
+      <h2 class="text-h2 mb-4">Responsive Text</h2>
+      
+      <div class="bg-background-light dark:bg-background-dark p-6 rounded-lg shadow-md">
+        <p class="text-rich-desktop md:text-rich-tablet sm:text-rich-mobile">
+          This text changes size based on the viewport width.
+          Resize your browser to see the effect.
+        </p>
+      </div>
+    </section>
+  </main>
+</Layout>

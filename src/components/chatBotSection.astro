@@ -1,0 +1,55 @@
+---
+/**
+ * ChatBotSection Component
+ *
+ * This component wraps the megaChatBot with the SectionBlock component,
+ * providing consistent styling and full-width layout.
+ *
+ * Props:
+ * - blok: object - The Storyblok content object containing component data
+ *   - blok.header: string - The main title of the chatbot section
+ *   - blok.subHeader: string - The subtitle or brief description
+ *   - blok.startMessage: string - Initial message for the chatbot
+ */
+
+// Import required components
+import SectionBlock from "./Base/SectionBlock.astro";
+import MegaChatBot from "./chatbot/megaChatBot.svelte";
+
+// Define interface for Storyblok blok props
+interface ChatBotBlok {
+  header?: string;
+  subHeader?: string;
+  startMessage?: string;
+}
+
+interface Props {
+  blok?: ChatBotBlok;
+}
+
+const { blok } = Astro.props as Props;
+const header = blok?.header || "Chat mit uns";
+const subHeader = blok?.subHeader || "Wie können wir Ihnen helfen?";
+const startMessage =
+  blok?.startMessage || "Hallo! Wie kann ich Ihnen heute helfen?";
+---
+
+<style>
+  /* Override the max-width constraint from SectionBlock */
+  .chatbot-wrapper :global(.max-w-screen-xl) {
+    max-width: 100% !important;
+  }
+</style>
+
+<div class="chatbot-wrapper bg-background-light dark:bg-background-dark">
+  <SectionBlock
+    header={header}
+    subHeader={subHeader}
+    sectionType="chatbot"
+    centered={true}
+  >
+    <div class="w-full mx-auto py-4 text-text-light dark:text-text-dark">
+      <MegaChatBot client:load startMessage={startMessage} />
+    </div>
+  </SectionBlock>
+</div>

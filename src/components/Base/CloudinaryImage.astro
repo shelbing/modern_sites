@@ -1,0 +1,42 @@
+---
+interface Props {
+  imageId:string;
+  width?:string;
+  height?:string;
+  transformMode?:string;
+  alt?:string;
+  transformTemplate?:string; //Template such as thumb, wide ...
+  id?: string;
+  href?: string; // the href to go to, ex "/posts/"
+  class?: string; // any additional classes
+  rest?: any; // catch-all for any additional parameters, such as "aria-label"
+}
+
+const {
+  imageId,
+  alt,
+  width,
+  height,
+  transformMode="",
+  transformTemplate,
+  id,
+  href,
+  class:className,
+  ...rest
+} = Astro.props as Props;
+
+const baseUrl ="https://res.cloudinary.com/dgyarghwg/image/upload/"
+const cloudCode="v1712731411/"
+let transformation
+if (transformMode=="") {
+    transformation="e_improve"
+}
+else {
+    transformation=transformMode+",e_improve,q_auto,f_auto"
+}
+
+if (height!=null) transformation+=",h_"+height
+if (width!=null) transformation+=",w_"+width
+const imageUrl=baseUrl+transformation+"/"+cloudCode+imageId
+---
+<img src={imageUrl} alt="Cloudinary Image" class={className} {...rest} />

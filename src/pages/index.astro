@@ -1,0 +1,239 @@
+---
+// Instead of instant redirect, we'll show a property-specific splash page and delay the redirect
+import { loadEnv } from "vite";
+
+export const prerender = true;
+
+// Define property-specific content for each variant
+const propertyContent = {
+  szs: {
+    name: "Wander- und Aktivhotel Zum Stern",
+    subtitle: "Glückliche Tage in den Bergen",
+    bgImage:
+      "https://res.cloudinary.com/dgyarghwg/image/upload/c_scale,f_auto,w_1280/v1723881076/sirius/SZS/Hotel/6L6A8101-Verbessert-RR_np9748.jpg",
+    fallbackImage:
+      "https://res.cloudinary.com/dgyarghwg/image/upload/v1699706118/sirius/SWR/SPA%20und%20Pool/6L6A9272-Verbessert-RR_u13sbs.jpg",
+  },
+  swr: {
+    name: "Hotel Weingut Römmert",
+    subtitle: "Wellness und Wein in Franken",
+    bgImage:
+      "https://res.cloudinary.com/dgyarghwg/image/upload/ar_191:100,c_scale,f_auto,w_1200/v1699706118/sirius/SWR/SPA%20und%20Pool/6L6A9272-Verbessert-RR_u13sbs.jpg",
+    fallbackImage:
+      "https://res.cloudinary.com/dgyarghwg/image/upload/v1699706117/sirius/SZS/Zimmer/IMG_0246_fljmrz.jpg",
+  },
+  sbh: {
+    name: "Kinder- und Familienhotel Bayerischer Hof",
+    subtitle: "Glückeliche Tage für die ganze Familie.",
+    bgImage:
+      "https://res.cloudinary.com/dgyarghwg/image/upload/c_scale,f_auto,w_1280/v1701238552/sirius/SBH/Luftaufnahmen/DJI_0721_gvb6iz.jpg",
+    fallbackImage:
+      "https://res.cloudinary.com/dgyarghwg/image/upload/c_scale,f_auto,w_1280/v1723881076/sirius/SZS/Hotel/6L6A8101-Verbessert-RR_np9748.jpg",
+  },
+  seh: {
+    name: "DAS ETTERSHAUS im Harz",
+    subtitle: "Wandern, Kulinarik, SPA, Baumhäuser",
+    bgImage:
+      "https://res.cloudinary.com/dgyarghwg/image/upload/c_scale,f_auto,w_1280/v1708252555/sirius/SEH/Baumh%C3%A4user/6L6A3160_mhukji.jpg",
+    fallbackImage:
+      "https://res.cloudinary.com/dgyarghwg/image/upload/c_scale,f_auto,w_1280/v1701238552/sirius/SBH/Luftaufnahmen/DJI_0721_gvb6iz.jpg",
+  },
+  shh: {
+    name: "Der Hohe Hahn",
+    subtitle: "Aktiv und entpannt im Erzgebirge",
+    bgImage:
+      "https://res.cloudinary.com/dgyarghwg/image/upload/c_scale,f_auto,w_1280/v1700031165/sirius/SHH/Aussen/6L6A0289-Verbessert-RR_jpq3jf.jpg",
+    fallbackImage:
+      "https://res.cloudinary.com/dgyarghwg/image/upload/c_scale,f_auto,w_1280/v1708252555/sirius/SEH/Baumh%C3%A4user/6L6A3160_mhukji.jpg",
+  },
+  pos: {
+    name: "Hotel & Spa POST Seefeld",
+    subtitle: "Luxuriöse Auszeit in Tirol",
+    bgImage:
+      "https://res.cloudinary.com/dgyarghwg/image/upload/c_scale,f_auto,w_1280/v1712730964/sirius/POS/SPA/6L6A9085-Verbessert-RR_gkyfkp.jpg",
+    fallbackImage:
+      "https://res.cloudinary.com/dgyarghwg/image/upload/c_scale,f_auto,w_1280/v1700031165/sirius/SHH/Aussen/6L6A0289-Verbessert-RR_jpq3jf.jpg",
+  },
+  // Add defaults or other properties as needed
+  default: {
+    name: "Sonnenhotels",
+    subtitle: "Ihre Zeit für Erholung",
+    bgImage:
+      "https://res.cloudinary.com/dgyarghwg/image/upload/ar_191:100,c_scale,f_auto,w_1200/v1699706118/sirius/SWR/SPA%20und%20Pool/6L6A9272-Verbessert-RR_u13sbs.jpg",
+    fallbackImage:
+      "https://res.cloudinary.com/dgyarghwg/image/upload/v1699706117/sirius/SZS/Zimmer/IMG_0246_fljmrz.jpg",
+  },
+};
+
+// Get the property from environment for build-time rendering
+const property = loadEnv("", process.cwd(), "PROPERTY").PROPERTY || "szs";
+
+// Get the content for the current property, falling back to default if not found
+const content =
+  propertyContent[property as keyof typeof propertyContent] ||
+  propertyContent.default;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sonnenhotels</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #000; /* Base dark color */
+        color: white;
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        overflow: hidden;
+        position: relative;
+      }
+
+      #background-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 0;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+      }
+
+      /* Add an overlay to ensure text remains readable */
+      #overlay {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+        z-index: 1;
+      }
+      .splash-container {
+        text-align: center;
+        position: relative;
+        z-index: 2;
+      }
+      .splash-text {
+        font-size: 4rem;
+        font-weight: bold;
+        text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+        margin: 0 auto;
+        max-width: 75.67%; /* Limit to 2/3 of screen width */
+        width: auto;
+        overflow-wrap: break-word;
+        white-space: normal;
+      }
+      .splash-subtitle {
+        font-size: 1.8rem;
+        font-weight: normal;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        margin: 1rem auto 2rem;
+        max-width: 66.67%; /* Limit to 2/3 of screen width */
+        width: auto;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+        font-style: italic;
+        opacity: 0.95;
+        letter-spacing: 0.02em;
+      }
+      .loader {
+        margin: 2rem auto 0;
+        width: 100%;
+        max-width: 66.67%; /* Match the text width limit */
+        height: 8px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      .loader-bar {
+        width: 0;
+        height: 100%;
+        background: white;
+        animation: loading 6s forwards;
+      }
+      @keyframes loading {
+        0% {
+          width: 0;
+        }
+        100% {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <img
+      id="background-image"
+      src={content.bgImage}
+      alt=""
+      onerror={`this.onerror=null; this.src='${content.fallbackImage}'; this.classList.add('loaded')`}
+      onload="this.classList.add('loaded')"
+    />
+    <div id="overlay"></div>
+
+    <div class="splash-container">
+      <div class="splash-text">{content.name}</div>
+      <div class="splash-subtitle">{content.subtitle}</div>
+      <div class="loader" id="text-width-loader">
+        <div class="loader-bar"></div>
+      </div>
+    </div>
+
+    <style>
+      .loaded {
+        opacity: 1 !important;
+      }
+    </style>
+
+    <script is:inline>
+      // Handle text and loader width
+      document.addEventListener("DOMContentLoaded", () => {
+        const textElement = document.querySelector(".splash-text");
+        const loaderElement = document.getElementById("text-width-loader");
+
+        if (textElement && loaderElement) {
+          // Calculate 2/3 of the viewport width
+          const maxWidth = Math.floor(window.innerWidth * 0.6667);
+
+          // Limit text width if it's wider than 2/3 of the screen
+          if (textElement.offsetWidth > maxWidth) {
+            textElement.style.width = maxWidth + "px";
+          }
+
+          // Set loader width to match text width, but not wider than max width
+          const textWidth = Math.min(textElement.offsetWidth, maxWidth);
+          loaderElement.style.width = textWidth + "px";
+        }
+      });
+    </script>
+
+    <script>
+      // Wait for the page to be fully loaded before starting the redirect timer
+      window.addEventListener("load", () => {
+        // Reset the loader animation to start when page is loaded
+        const loaderBar = document.querySelector(".loader-bar") as HTMLElement;
+        if (loaderBar) {
+          loaderBar.style.animation = "none";
+          // Force reflow
+          loaderBar.offsetHeight;
+          loaderBar.style.animation = "loading 6s forwards";
+        }
+
+        // Start the 6-second redirect timer after page is fully loaded
+        setTimeout(() => {
+          window.location.href = "/de/home";
+        }, 6000);
+      });
+    </script>
+  </body>
+</html>

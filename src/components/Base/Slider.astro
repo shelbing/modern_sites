@@ -1,0 +1,208 @@
+---
+/**
+ * Slider Component
+ * 
+ * This component creates a customizable image slider with automatic and manual navigation.
+ * 
+ * Features:
+ * - Configurable width and height
+ * - Adjustable slide interval
+ * - Automatic slide transition with randomized initial delay
+ * - Manual navigation with previous and next buttons
+ * - Smooth fade transition between slides
+ * - Responsive design
+ * - Avoids orphaned headings (Hurenkinder) for h1 styles
+ * 
+ * Usage:
+ * <Slider width="100%" height="300px" interval={5000}>
+ *   <img src="image1.jpg" alt="Slide 1" />
+ *   <img src="image2.jpg" alt="Slide 2" />
+ *   <img src="image3.jpg" alt="Slide 3" />
+ * </Slider>
+ */
+
+// Define the props interface for the component
+interface Props {
+  class?: string;
+  width?: string;
+  height?: string;
+  interval?: number;
+}
+
+// Destructure props with default values
+const { 
+  class: className,
+  width = '100%',
+  height = '300px',
+  interval = 5000
+} = Astro.props;
+---
+
+<!-- Slider container with dynamic styling -->
+<div 
+  class:list={["astro-slider relative overflow-hidden", className]}
+  style={`width: ${width}; height: ${height};`}
+  data-interval={interval}
+>
+  <div class="slider relative w-full h-full">
+    <slot />
+  </div>
+  <!-- Navigation buttons -->
+  <button class="prev z-50" aria-label="Previous slide">&lt;</button>
+  <button class="next z-50" aria-label="Next slide">&gt;</button>
+</div>
+
+<style>
+  /* Styles for the slider component */
+  .astro-slider {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .slider {
+    display: flex;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Styles for individual slides */
+  .slider :global(> *) {
+    flex: 0 0 100%;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Style for the active slide */
+  .slider :global(> .active) {
+    opacity: 1;
+    z-index: 1;
+  }
+
+  /* Styles for navigation buttons */
+  .prev, .next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.5);
+    border: none;
+    padding: 1rem;
+    cursor: pointer;
+    z-index: 10;
+  }
+
+  .prev {
+    left: 10px;
+  }
+
+  .next {
+    right: 10px;
+  }
+
+  /* Avoid orphaned headings (Hurenkinder) for h1 styles */
+  @media print {
+    .slider {
+      break-inside: avoid;
+      break-after: avoid;
+      orphans: 3;
+    }
+  }
+</style>
+
+<script>
+  // Slider class to handle slider functionality
+  class Slider {
+    private currentIndex = 0;
+    private slides: HTMLElement[];
+    private prevButton: HTMLElement;
+    private nextButton: HTMLElement;
+    private interval = 5000; // 5 seconds
+    private autoPlayTimer: number | null = null;
+
+    constructor(element: HTMLElement) {
+      const slider = element.querySelector('.slider');
+      const slides = Array.from(slider?.children || []);
+      const prevButton = element.querySelector('.prev');
+      const nextButton = element.querySelector('.next');
+
+      if (!slider || !slides.length || !prevButton || !nextButton) {
+        throw new Error('Required slider elements not found');
+      }
+
+      this.slides = slides as HTMLElement[];
+      this.prevButton = prevButton as HTMLElement;
+      this.nextButton = nextButton as HTMLElement;
+
+      this.interval = parseInt(element.getAttribute('data-interval') || '5000', 10);
+
+      this.initializeSlider();
+    }
+
+    private initializeSlider(): void {
+      // Set initial state
+      this.slides.forEach((slide, index) => {
+        if (index === 0) {
+          slide.classList.add('active');
+        }
+      });
+
+      // Set up event listeners
+      this.prevButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.slide(-1);
+      });
+
+      this.nextButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.slide(1);
+      });
+
+      this.startAutoPlay();
+    }
+
+    private slide(direction: number): void {
+      if (this.slides.length <= 1) return;
+
+      this.slides[this.currentIndex].classList.remove('active');
+      this.currentIndex = (this.currentIndex + direction + this.slides.length) % this.slides.length;
+      this.slides[this.currentIndex].classList.add('active');
+
+      this.resetAutoPlay();
+    }
+
+    private startAutoPlay(): void {
+      const randomOffset = Math.random() * 3 * this.interval;
+      const initialInterval = this.interval + randomOffset;
+      
+      this.autoPlayTimer = window.setTimeout(() => {
+        this.slide(1);
+        this.autoPlayTimer = window.setInterval(() => this.slide(1), this.interval);
+      }, initialInterval);
+    }
+
+    private resetAutoPlay(): void {
+      if (this.autoPlayTimer) {
+        clearTimeout(this.autoPlayTimer);
+        clearInterval(this.autoPlayTimer);
+        this.startAutoPlay();
+      }
+    }
+  }
+
+  // Initialize sliders
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.astro-slider').forEach(slider => {
+      try {
+        new Slider(slider as HTMLElement);
+      } catch (error) {
+        console.error('Failed to initialize slider:', error);
+      }
+    });
+  });
+</script>

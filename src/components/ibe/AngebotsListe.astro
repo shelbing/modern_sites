@@ -1,0 +1,21 @@
+---
+import BundlesDisplay from './BundlesDisplay.svelte';
+import StoreDebugger from './StoreDebugger.svelte';
+import AvailabilityLoader from './AvailabilityLoader.svelte';
+import OffersLoader from './OffersLoader.svelte';
+const { blok, language } = Astro.props;
+---
+
+<div class="angebots-liste bg-white dark:bg-gray-900 transition-colors duration-200">
+    <OffersLoader client:load lang={language}>
+        <BundlesDisplay client:load kategorie={blok.Kategorie} language={language} />
+    </OffersLoader>
+    <AvailabilityLoader client:load />
+    <StoreDebugger client:load />
+</div>
+
+<style>
+.angebots-liste {
+    @apply container mx-auto px-4 py-8;
+}
+</style>

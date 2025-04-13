@@ -1,0 +1,68 @@
+---
+import Layout from '../layouts/Layout.astro';
+import fontCombinations from '../config/fontCombinations.js';
+
+// Get the current font combination
+const combinationIndex = parseInt(import.meta.env.FONT_COMBINATION || '1', 10) - 1;
+const validIndex = Math.max(0, Math.min(combinationIndex, fontCombinations.length - 1));
+const selectedFontCombination = fontCombinations[validIndex];
+---
+
+<Layout title="Umlaut Test Page">
+  <main class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Umlaut Test Page</h1>
+    
+    <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-8">
+      <h2 class="text-2xl font-semibold mb-4">Current Font Configuration</h2>
+      <p><strong>Font Combination:</strong> {selectedFontCombination.name}</p>
+      <p><strong>Heading Font:</strong> {selectedFontCombination.heading}</p>
+      <p><strong>Body Font:</strong> {selectedFontCombination.body}</p>
+      <p><strong>Google Fonts URL:</strong> {selectedFontCombination.googleFontsUrl}</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
+        <h2 class="text-2xl font-semibold mb-4">Heading Font Test (Umlauts)</h2>
+        <div class="space-y-4">
+          <p class="text-xl font-serif">Überschrift mit Umlauten</p>
+          <p class="text-xl font-serif">Äpfel und Äste</p>
+          <p class="text-xl font-serif">Öffnungszeiten</p>
+          <p class="text-xl font-serif">Für unsere Gäste</p>
+          <p class="text-xl font-serif">ÄRGER, ÖFFNUNG, ÜBER</p>
+        </div>
+      </div>
+      
+      <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
+        <h2 class="text-2xl font-semibold mb-4">Body Font Test (Umlauts)</h2>
+        <div class="space-y-4">
+          <p>Dieser Text enthält Umlaute wie ä, ö, ü.</p>
+          <p>Wir möchten Ihnen ein schönes Erlebnis bieten.</p>
+          <p>Bitte überprüfen Sie Ihre Buchung.</p>
+          <p>Genießen Sie Ihren Aufenthalt!</p>
+          <p>ÄRGER, ÖFFNUNG, ÜBER</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-8 bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
+      <h2 class="text-2xl font-semibold mb-4">Special Character Test</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <h3 class="text-lg font-semibold mb-2">German</h3>
+          <p>ä ö ü ß Ä Ö Ü</p>
+          <p>Grüße aus München</p>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2">French</h3>
+          <p>é è ê ë à â ç ù û</p>
+          <p>Café à la crème</p>
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold mb-2">Other</h3>
+          <p>å æ ø ñ ð þ</p>
+          <p>Señor Jørgen</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>

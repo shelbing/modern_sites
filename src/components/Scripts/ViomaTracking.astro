@@ -1,0 +1,67 @@
+<script>
+  // Extend the Window interface to include plausible
+  declare global {
+    interface Window {
+      plausible?: (eventName: string, options: { props: any }) => void;
+    }
+  }
+
+  function sendToPlausible(eventName: string, props: any) {
+    if (typeof window.plausible === "function") {
+      window.plausible(eventName, { props: props });
+    } else {
+      console.error("Plausible Analytics is not loaded");
+    }
+  }
+
+  function observeIframeAdditions() {
+    const targetNode = document.body;
+    const config = { childList: true, subtree: true };
+
+    const callback = function (
+      mutationsList: MutationRecord[]
+    ) {
+      for (let mutation of mutationsList) {
+        if (mutation.type === "childList") {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeName === "IFRAME") {
+              const iframe = node as HTMLIFrameElement;
+              const src = iframe.src;
+              if (src && src.includes("tracking-codes.php")) {
+                console.log("Tracking iframe detected:", src);
+                // Hier können Sie die URL parsen oder weitere Aktionen durchführen
+                const urlParams = new URLSearchParams(new URL(src).search);
+                if (urlParams.get("page_url") != null) {
+                  const trackingData = {
+                    page_url: urlParams.get("page_url"),
+                    page_sub_content: urlParams.get("page_sub_content"),
+                    page_sub_type: urlParams.get("page_sub_type"),
+                    page_sub_name: urlParams.get("page_sub_name"),
+                  };
+                  sendToPlausible("Tracking", trackingData);
+                } else {
+                  const amount = urlParams.get("c_amount");
+                  console.log(amount);
+                  const trackingData = {
+                    revenue: { amount: amount },
+                  };
+                  sendToPlausible("Booking", trackingData);
+                }
+              }
+            }
+          });
+        }
+      }
+    };
+
+    const observer = new MutationObserver(callback);
+    observer.observe(targetNode, config);
+  }
+
+  // Starten Sie die Beobachtung, sobald das Dokument geladen ist
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", observeIframeAdditions);
+  } else {
+    observeIframeAdditions();
+  }
+</script>

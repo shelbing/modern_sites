@@ -1,0 +1,78 @@
+---
+/**
+ * DarkModeToggle Component
+ * 
+ * This component provides a toggle button for switching between light and dark modes.
+ * It includes functionality to set the initial theme based on user preference or previous selection,
+ * and dynamically updates the UI and CSS variables when the theme changes.
+ */
+
+// Import Moon and Sun components for dark mode toggle
+import Moon from './Moon.astro';
+import Sun from './Sun.astro';
+---
+
+<!-- Header containing the dark mode toggle button -->
+<header class="bg-menu-light dark:bg-menu-dark text-menutext-light dark:text-menutext-dark">
+    <button id="dark-mode-toggle" class="w-4 h-4">
+      <Sun />
+      <Moon />
+    </button>
+</header>
+
+<script>
+    // Function to set dark mode and update CSS variables
+    function setDarkMode(isDark: boolean) {
+        if (isDark) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        // Store the theme preference in localStorage
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+
+        // Update CSS variables based on the theme
+        const root = document.documentElement;
+        if (isDark) {
+            root.style.setProperty('--bg-color', 'var(--dark-bg-color)');
+            root.style.setProperty('--text-color', 'var(--dark-text-color)');
+        } else {
+            root.style.setProperty('--bg-color', 'var(--light-bg-color)');
+            root.style.setProperty('--text-color', 'var(--light-text-color)');
+        }
+    }
+
+    // Function to toggle dark mode
+    function toggleDarkMode() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        setDarkMode(isDark);
+    }
+
+    // Function to initialize dark mode based on user preference and stored theme
+    function initDarkMode() {
+        const userPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const storedTheme = localStorage.getItem('theme');
+        
+        if (storedTheme === 'dark' || (storedTheme === null && userPrefersDark)) {
+            setDarkMode(true);
+        } else {
+            setDarkMode(false);
+        }
+
+        // Add click event listener to the dark mode toggle button
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', toggleDarkMode);
+        }
+    }
+
+    // Run initDarkMode immediately
+    initDarkMode();
+
+    // Add event listener for Astro page changes
+    document.addEventListener('astro:after-swap', initDarkMode);
+
+    // Add event listener for view transitions
+    document.addEventListener('astro:page-load', initDarkMode);
+</script>

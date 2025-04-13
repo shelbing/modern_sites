@@ -1,0 +1,62 @@
+---
+import fontCombinations from '../config/fontCombinations';
+import { getSelectedFontCombination } from '../config/fontCombinations';
+import FontPreviewLoader from '../components/Scripts/FontPreviewLoader.astro';
+
+const selectedFontCombination = getSelectedFontCombination();
+const currentFontIndex = fontCombinations.findIndex(font => font.name === selectedFontCombination.name) + 1;
+
+const { showName = true, showInfo = true, compact = false } = Astro.props;
+---
+
+<!-- Load current font -->
+<FontPreviewLoader fontIndices={[currentFontIndex]} />
+
+<div class={`font-showcase ${compact ? 'text-sm' : ''} p-4 bg-background-light dark:bg-background-dark rounded-lg shadow-sm`}>
+  {showName && (
+    <div class="mb-3">
+      <h3 class="font-serif text-lg font-bold text-sectionheader-light dark:text-sectionheader-dark">
+        {selectedFontCombination.name} <span class="text-sm font-normal text-textSecondary-light dark:text-textSecondary-dark">(#{currentFontIndex})</span>
+      </h3>
+    </div>
+  )}
+  
+  {showInfo && (
+    <div class="mb-3 text-sm text-textSecondary-light dark:text-textSecondary-dark">
+      <p><strong>Heading:</strong> {selectedFontCombination.heading}</p>
+      <p><strong>Body:</strong> {selectedFontCombination.body}</p>
+    </div>
+  )}
+  
+  <div class="font-samples">
+    <div class="heading-sample mb-2">
+      <h4 class="font-serif text-xl mb-1 text-sectionheader-light dark:text-sectionheader-dark">Heading Sample</h4>
+      <div class="p-3 bg-paper-light dark:bg-paper-dark rounded border border-gray-200 dark:border-gray-700">
+        <p class="font-serif text-lg">
+          The quick brown fox jumps over the lazy dog.
+        </p>
+        <p class="font-serif text-lg">
+          Grüße aus Österreich! Wir würden uns über Ihren Besuch freuen.
+        </p>
+      </div>
+    </div>
+    
+    <div class="body-sample">
+      <h4 class="font-serif text-xl mb-1 text-sectionheader-light dark:text-sectionheader-dark">Body Sample</h4>
+      <div class="p-3 bg-paper-light dark:bg-paper-dark rounded border border-gray-200 dark:border-gray-700">
+        <p class="mb-2">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+        </p>
+        <p>
+          Schöne Grüße aus München! Die Qualität unserer Zimmer übertrifft Ihre Erwartungen.
+        </p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="mt-4 text-right">
+    <a href="/font-preview" class="text-sm text-primarybutton-light dark:text-primarybutton-dark hover:underline">
+      View all fonts →
+    </a>
+  </div>
+</div>

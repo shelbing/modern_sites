@@ -1,0 +1,51 @@
+/* 
+ * Custom Fonts CSS
+ * 
+ * This file contains CSS for custom fonts loaded from Google Fonts.
+ * The actual font loading is handled by CustomFonts.astro and Fonts.astro.
+ */
+
+/* Apply heading font to headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-heading);
+}
+
+/* Apply body font to body text */
+body {
+  font-family: var(--font-family-body);
+}
+
+/* Font loading indicator (only in development mode) */
+.font-loading-indicator {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 9999;
+}
+
+/* Debug styles */
+.font-debug {
+  font-family: monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  margin: 10px 0;
+  padding: 10px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: auto;
+  max-height: 300px;
+}
+
+.font-debug-success {
+  color: green;
+}
+
+.font-debug-error {
+  color: red;
+}

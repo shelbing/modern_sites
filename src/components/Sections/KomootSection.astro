@@ -1,0 +1,285 @@
+---
+/**
+ * KomootSection Component
+ * 
+ * This component displays a collection of Komoot tours using iframes.
+ * Each tour is embedded as an iframe from Komoot's embed functionality.
+ * The component is responsive and adapts to different screen sizes.
+ * 
+ * Uses centralized color configuration from /src/config/colors.js
+ * Integrates with Storyblok CMS for content management.
+ */
+
+/**
+ * Interface defining the structure of the props expected by the KomootSection component.
+ */
+interface KomootSectionProps {
+  blok: {
+    title: string;            // Main section heading
+    subtitle: string;         // Subheading or description
+    tours: Array<{           // Komoot tours array
+      _uid: string;          // Unique identifier for the tour
+      link: string;          // Embed link/URL from Komoot
+      title?: string;        // Optional title for the tour
+      description?: string;  // Optional description for the tour
+    }>;
+  }
+}
+
+// Destructure the props and assign types, providing default values if blok isn't provided
+const { blok = {title: '', subtitle: '', tours: []} } = Astro.props as Partial<KomootSectionProps>;
+
+// Ensure blok and its properties exist to avoid errors when accessing nested properties
+const safeBlok = {
+  title: blok?.title || "Wandertouren in unserer Umgebung",
+  subtitle: blok?.subtitle || "Entdecken Sie die schönsten Wanderwege rund um unser Hotel",
+  tours: blok?.tours || []
+};
+
+// Import SectionBlock component
+import SectionBlock from '../Base/SectionBlock.astro';
+
+// Import colors from the centralized semantic color system
+import colors from '../../config/colors.js';
+// Import the Colors type from the type definition file
+import type { Colors } from '../../config/colors';
+
+// Extend colors with the utility functions we know exist but TypeScript doesn't recognize
+type ColorUtils = {
+  getTailwindColorClasses: (section: string) => Record<string, string>;
+};
+
+const colorsWithUtils = colors as unknown as Colors & ColorUtils;
+
+// Get the Komoot section color classes using the centralized utility function
+const komootSectionClasses = colorsWithUtils.getTailwindColorClasses('komootSection');
+
+// Get text color classes for card title and description
+const cardTitleClass = komootSectionClasses['komootSection-cardTitle'] ? `${komootSectionClasses['komootSection-cardTitle']}` : 'text-text-light dark:text-text-dark';
+const cardDescriptionClass = komootSectionClasses['komootSection-cardDescription'] ? `${komootSectionClasses['komootSection-cardDescription']}` : 'text-textSecondary-light dark:text-text-dark';
+
+// We use the centralized color system through the SectionBlock component
+---
+
+<SectionBlock 
+  header={safeBlok.title} 
+  subHeader={safeBlok.subtitle}
+  sectionType="komootSection"
+  centered={true}
+>
+  <!-- Komoot Tours Slider -->
+  <div class="komoot-slider-container relative overflow-hidden mt-8">
+    {safeBlok.tours.length > 0 ? (
+      <>
+        <div class="komoot-slider flex transition-transform duration-500 ease-in-out gap-8">
+          {safeBlok.tours.map(tour => (
+            <div class="komoot-slide flex-shrink-0 w-full md:w-[calc(50%-1rem)]">
+              <div class="bg-paper-light dark:bg-paper-dark rounded-lg shadow-md overflow-hidden h-full">
+                <!-- Tour Content -->
+                <div class="flex flex-col h-full">
+                  {tour.title && (
+                    <h3 class={`text-h4 font-bold ${cardTitleClass} p-4 pb-0`}>{tour.title}</h3>
+                  )}
+                  {tour.description && (
+                    <p class={`text-body-base ${cardDescriptionClass} p-4 pb-3 pt-2`}>{tour.description}</p>
+                  )}
+                  <!-- Komoot Iframe -->
+                  <div class="komoot-tour-container w-full relative">
+                    <Fragment set:html={tour.link} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <!-- Slider Navigation -->
+        <button
+          class="slider-btn prev absolute top-1/2 left-4 transform -translate-y-1/2 bg-primarybutton-light text-primarybuttontext-light dark:bg-primarybutton-dark dark:text-primarybuttontext-dark p-2 rounded-full z-10 opacity-80 hover:opacity-100 transition-opacity"
+          aria-label="Previous tour"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+        <button
+          class="slider-btn next absolute top-1/2 right-4 transform -translate-y-1/2 bg-primarybutton-light text-primarybuttontext-light dark:bg-primarybutton-dark dark:text-primarybuttontext-dark p-2 rounded-full z-10 opacity-80 hover:opacity-100 transition-opacity"
+          aria-label="Next tour"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+        <!-- Dots Indicators -->
+        <div class="dots-container flex justify-center mt-4 space-x-2"></div>
+      </>
+    ) : (
+      <div class="text-center py-8">
+        <p class="text-body-lg text-textSecondary-light dark:text-textSecondary-dark mb-4">Keine Wandertouren gefunden.</p>
+        <p class="text-body-base text-textSecondary-light dark:text-textSecondary-dark">Bitte fügen Sie Touren über Storyblok hinzu.</p>
+      </div>
+    )}
+  </div>
+</SectionBlock>
+
+<style>
+  /* Additional custom styles for Komoot iframes */
+  .komoot-tour-container iframe {
+    width: 100%;
+    border: 0;
+    min-height: 440px;
+  }
+  
+  /* Make sure iframes don't overflow their containers */
+  .komoot-tour-container {
+    overflow: hidden;
+  }
+
+  /* Slider styles */
+  .komoot-slider-container {
+    width: 100%;
+    position: relative;
+  }
+
+  .slider-btn {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Dot indicator styles */
+  .dots-container .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+</style>
+
+<script>
+  // Function to set up the Komoot slider
+  function setupKomootSlider(): void {
+    const sliderContainer = document.querySelector<HTMLElement>('.komoot-slider-container');
+    if (!sliderContainer) return;
+
+    const slider = sliderContainer.querySelector<HTMLElement>('.komoot-slider');
+    const slides = sliderContainer.querySelectorAll<HTMLElement>('.komoot-slide');
+    const prevBtn = sliderContainer.querySelector<HTMLElement>('.prev');
+    const nextBtn = sliderContainer.querySelector<HTMLElement>('.next');
+    const dotsContainer = sliderContainer.querySelector<HTMLElement>('.dots-container');
+
+    if (!slider || !slides.length || !prevBtn || !nextBtn || !dotsContainer) return;
+
+    // Variables for the slider
+    let currentIndex = 0;
+    let autoSlideInterval: number | undefined;
+    const slideCount = slides.length;
+    const slidesToShow = window.innerWidth >= 768 ? 2 : 1; // Show 2 slides on tablets and above, 1 on mobile
+    const maxIndex = Math.max(0, slideCount - slidesToShow);
+
+    // Create dot indicators
+    for (let i = 0; i <= maxIndex; i++) {
+      const dot = document.createElement('span');
+      dot.classList.add('dot', 'inline-block', 'bg-gray-300', 'dark:bg-gray-600');
+      if (i === 0) dot.classList.add('bg-primary-light', 'dark:bg-primary-dark');
+      dot.dataset.index = i.toString();
+      dot.addEventListener('click', () => goToSlide(i));
+      dotsContainer.appendChild(dot);
+    }
+
+    // Function to update the slider position
+    function updateSlider(): void {
+      // Safety check to ensure elements exist
+      if (!slider || !dotsContainer) return;
+      
+      if (slidesToShow === 1) {
+        // For mobile, just shift by 100% width
+        slider.style.transform = `translateX(-${currentIndex * 100}%)`;
+      } else {
+        // For desktop and tablet, account for the gap between slides (1rem = 16px)
+        // We calculate how much to shift based on the slide width plus gap
+        const slideWidth = slides[0].offsetWidth;
+        const gapWidth = 16; // 1rem = 16px by default
+        slider.style.transform = `translateX(-${currentIndex * (slideWidth + gapWidth)}px)`;
+      }
+
+      // Update active dot
+      const dots = dotsContainer.querySelectorAll('.dot');
+      dots.forEach((dot, i) => {
+        if (i === currentIndex) {
+          dot.classList.add('bg-primary-light', 'dark:bg-primary-dark');
+          dot.classList.remove('bg-gray-300', 'dark:bg-gray-600');
+        } else {
+          dot.classList.remove('bg-primary-light', 'dark:bg-primary-dark');
+          dot.classList.add('bg-gray-300', 'dark:bg-gray-600');
+        }
+      });
+    }
+
+    // Go to a specific slide
+    function goToSlide(index: number): void {
+      currentIndex = Math.max(0, Math.min(index, maxIndex));
+      updateSlider();
+    }
+
+    // Show next slide
+    function showNextSlide(): void {
+      currentIndex = (currentIndex >= maxIndex) ? 0 : currentIndex + 1;
+      updateSlider();
+    }
+
+    // Show previous slide
+    function showPrevSlide(): void {
+      currentIndex = (currentIndex <= 0) ? maxIndex : currentIndex - 1;
+      updateSlider();
+    }
+
+    // Set up event listeners
+    prevBtn.addEventListener('click', showPrevSlide);
+    nextBtn.addEventListener('click', showNextSlide);
+
+    // Start auto-sliding
+    function startAutoSlide(): void {
+      stopAutoSlide();
+      autoSlideInterval = window.setInterval(showNextSlide, 8000);
+    }
+
+    // Stop auto-sliding
+    function stopAutoSlide(): void {
+      if (autoSlideInterval) window.clearInterval(autoSlideInterval);
+    }
+
+    // Pause auto-sliding when hovering over slider
+    sliderContainer.addEventListener('mouseenter', stopAutoSlide);
+    sliderContainer.addEventListener('mouseleave', startAutoSlide);
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      const newSlidesToShow = window.innerWidth >= 768 ? 2 : 1;
+      if (newSlidesToShow !== slidesToShow) {
+        // Reload the page to recalculate everything
+        // This is a simple solution but could be improved for production
+        window.location.reload();
+      }
+    });
+
+    // Initialize slider
+    updateSlider();
+    startAutoSlide();
+  }
+
+  // Initialize the slider when the DOM is loaded
+  document.addEventListener('DOMContentLoaded', setupKomootSlider);
+  
+  // Also initialize when Astro's view transition completes (for transitions between pages)
+  document.addEventListener('astro:page-load', setupKomootSlider);
+
+  // Ensure the slider initializes when this script runs
+  // This helps when the page is already loaded before this script executes
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(setupKomootSlider, 100);
+  }
+</script>

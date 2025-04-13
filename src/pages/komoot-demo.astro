@@ -1,0 +1,64 @@
+---
+import Layout from '../layouts/Layout.astro';
+import KomootSection from '../components/Sections/KomootSection.astro';
+---
+
+<Layout title="Komoot Section Demo - Hotel Stern">
+  <main class="mt-16">
+    <!-- Demo page header -->
+    <div class="bg-paper-light dark:bg-paper-dark py-8 mb-8">
+      <div class="container mx-auto px-4">
+        <h1 class="text-h1 text-text-light dark:text-text-dark text-center font-bold">
+          Komoot Wandertouren Demonstration
+        </h1>
+        <p class="text-body-lg text-textSecondary-light dark:text-textSecondary-dark text-center mt-4">
+          Diese Seite zeigt die neue Wandertouren-Sektion mit Komoot-Integration für die Website des Hotels.
+        </p>
+      </div>
+    </div>
+    
+    <!-- The KomootSection component with demo data -->
+    <KomootSection blok={{
+      title: "Entdecken Sie unsere Umgebung",
+      subtitle: "Unsere Lieblings-Wandertouren in der Nähe des Hotels",
+      tours: [
+        {
+          _uid: "tour1",
+          title: "Schöne Bergwanderung",
+          description: "Eine mittelschwere Wanderung mit atemberaubender Aussicht auf die umliegenden Berge.",
+          link: '<iframe src="https://www.komoot.com/de-de/tour/960206319/embed?share_token=agHnkzkSRA5b8RQOKt8l8Qvy1PcUXy70dPh50eTK3chmKyEEU8" width="100%" height="440" frameborder="0" scrolling="no"></iframe>'
+        },
+        {
+          _uid: "tour2",
+          title: "Gemütliche Talwanderung",
+          description: "Perfekt für Familien und Genusswanderer. Entlang von Bächen und durch schöne Wälder.",
+          link: '<iframe src="https://www.komoot.com/de-de/tour/960206319/embed?share_token=agHnkzkSRA5b8RQOKt8l8Qvy1PcUXy70dPh50eTK3chmKyEEU8" width="100%" height="440" frameborder="0" scrolling="no"></iframe>'
+        }
+      ]
+    }} />
+    
+    <!-- Additional explanation -->
+    <div class="container mx-auto px-4 py-12">
+      <div class="bg-paper-light dark:bg-paper-dark p-6 rounded-lg shadow-md">
+        <h2 class="text-h3 text-text-light dark:text-text-dark font-bold mb-4">Über diese Komponente</h2>
+        <ul class="list-disc pl-6 space-y-2 text-body-base text-textSecondary-light dark:text-textSecondary-dark">
+          <li>Responsives Layout: 2 Touren pro Reihe auf Desktop, 1 Tour pro Reihe auf mobilen Geräten</li>
+          <li>Integration mit Komoot-Einbettungsfunktion via iframes</li>
+          <li>Vollständige Storyblok-Integration für einfache Verwaltung der Touren</li>
+          <li>Optionale Titel und Beschreibungen für jede Tour</li>
+          <li>Vollständig mit dem Farbsystem der Seite integriert (Dark Mode unterstützt)</li>
+        </ul>
+        <h3 class="text-h4 text-text-light dark:text-text-dark font-bold mt-6 mb-3">Storyblok-Integration</h3>
+        <p class="text-body-base text-textSecondary-light dark:text-textSecondary-dark mb-4">
+          In Storyblok können Sie Komoot-Touren hinzufügen, indem Sie den Einbettungscode von Komoot kopieren und in das Linkfeld einfügen. 
+          Der Titel und die Beschreibung jeder Tour sind optional und können in Storyblok bearbeitet werden.
+        </p>
+        <div class="mt-8">
+          <a href="/" class="px-6 py-3 bg-primarybutton-light text-primarybuttontext-light dark:bg-primarybutton-dark dark:text-primarybuttontext-dark rounded-lg hover:opacity-90 transition-opacity">
+            Zurück zur Startseite
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>

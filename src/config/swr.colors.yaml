@@ -1,0 +1,349 @@
+# Colors Configuration for SWR Hotel Property
+# 
+# This file contains custom color definitions specific to the SWR property.
+# All section-specific colors are defined here and can be imported by colors.js.
+# 
+# Property-specific YAML allows each property to have its own visual identity.
+
+# Theme colors - SWR custom property palette
+themeColors:
+  # Primary and secondary theme colors
+  primary:
+    light: '#305F85'  # Refined navy blue - sophisticated and serene
+    dark: '#6B9AC4'   # Lighter blue for dark mode
+  
+  secondary:
+    light: '#E0E5EC'  # Rich teal - elegant and refreshing
+    dark: '#FFEB3B'   # TEMPORARY: Yellow for debugging secondary-dark color issues
+  
+  # Hero background
+  hero-background:
+    light: '#4ECDC4'  # Aqua - seaside resort theme
+    dark: '#2FB8AC'
+    
+  # Hero text colors
+  hero-text:
+    light: '#000000'
+    dark: '#FFFFFF'
+
+  # Background colors
+  background:
+    light: '#aaaaaa'  # Light grey background - clean, minimalist approach
+    dark: '#020202'   # Deep black for striking dark mode contrast
+  
+  paper:
+    light: '#dddddd'  # Soft honey light color for content sections
+    dark: '#353535'   # Almost-white grey for dark mode sections - high readability
+  
+  # Text colors
+  text:
+    light: '#14365D'  # Deep sophisticated blue - elegant contrast on light backgrounds
+    dark: '#EFEFEF'   # Off-white grey - excellent readability in dark mode
+  
+  textSecondary:
+    light: '#566573'  # Slate gray for secondary text - sophisticated
+    dark: '#EFEFEF'   # Off-white grey for dark mode secondary text
+  
+  # Accent colors (warm contrast to cool primary/secondary)
+  accent:
+    light: '#D4A15A'  # Muted gold - premium and subtle
+    dark: '#F6C066'   # Lighter gold for dark mode
+  
+  # Button colors
+  primarybutton:
+    light: '#305F85'  # Match primary
+    dark: '#3A6B96'   # Darker blue for better contrast with white text
+  
+  primarybuttontext:
+    light: '#FFFFFF'  # White on blue buttons
+    dark: '#FFFFFF'   # White on blue buttons
+  
+  secondarybutton:
+    light: '#FFFFFF'  # White background
+    dark: '#253649'   # Dark paper color
+  
+  secondarybuttontext:
+    light: '#305F85'  # Primary color text
+    dark: '#E2E8F0'   # Light text
+  
+  # Special buttons (for specific UI components)
+  button:
+    light: '#F0F8FF'  # Very light blue background
+    dark: '#1F354A'   # Darker navy for dark mode with better contrast
+  
+  buttontext:
+    light: '#305F85'  # Primary blue for text in light mode
+    dark: '#E2F0FF'   # Brighter blue text for dark mode for better contrast
+  
+  # Header and menu colors
+  heading:
+    light: '#2C3E50'  # Deep navy-charcoal
+    dark: '#E2E8F0'   # Soft white
+  
+  menu:
+    light: '#F9F7F2'  # Background light
+    dark: '#1A2639'   # Background dark
+  
+  menutext:
+    light: '#2C3E50'  # Text light
+    dark: '#E2E8F0'   # Text dark
+  
+  menuaccent:
+    light: '#305F85'  # Primary light
+    dark: '#6B9AC4'   # Primary dark
+  
+  # Section header colors
+  sectionheader:
+    light: '#305F85'  # Using primary blue for consistent branding in headers
+    dark: '#6B9AC4'   # Matching dark mode primary for better visual harmony
+  
+  sectionsubheader:
+    light: '#38A18C'  # Using secondary teal for consistent styling
+    dark: '#67D5B5'   # Matching dark mode secondary for better consistency
+
+# Base colors (section-specific configurations)
+colors:
+  # Hero section colors
+  hero:
+    mainText:
+      background: '[hero-background-light]'  # Using bracket notation for multi-hyphenated theme color
+      darkModeBackground: '[hero-background-dark]'  # Using bracket notation for multi-hyphenated theme color
+      opacity: '85'
+      darkModeOpacity: '90'  # Slightly reduced opacity for better readability
+      textColor: 'paper-light'  # Brighter white for better contrast
+      darkModeTextColor: 'paper-light'  # Ensuring consistent bright text in dark mode
+    
+    subTitle:
+      background: '[hero-background-light]'
+      darkModeBackground: '[hero-background-dark]'  # Using the brighter gold for better visibility
+      opacity: '85'
+      darkModeOpacity: '85'  # Lower opacity for better visibility of background images
+      textColor: 'text-light'
+      darkModeTextColor: 'paper-light'  # Ensuring bright text that's easy to read
+  
+  # Section block colors
+  sectionBlock:
+    header:
+      color: 'sectionheader-light'
+      darkModeColor: 'sectionheader-dark'
+    
+    subheader:
+      color: 'sectionsubheader-light'
+      darkModeColor: 'sectionsubheader-dark'
+  
+  # FAQ section colors
+  faq:
+    question:
+      background: 'paper-light'
+      darkModeBackground: 'paper-dark'
+      textColor: 'text-light'
+      darkModeTextColor: 'text-dark'
+      borderColor: 'accent-light'
+      darkModeBorderColor: 'accent-dark'
+    
+    questionOpened:
+      background: 'secondary-light'
+      darkModeBackground: 'secondary-dark'
+      textColor: 'paper-light'
+      darkModeTextColor: 'paper-light'
+      borderColor: 'secondary-light'
+      darkModeBorderColor: 'secondary-dark'
+    
+    answer:
+      background: 'paper-light'
+      darkModeBackground: 'paper-dark'
+      textColor: 'text-light'
+      darkModeTextColor: 'text-dark'
+      borderColor: 'accent-light'
+      darkModeBorderColor: 'accent-dark'
+  
+  # Chatbot section colors
+  chatbot:
+    userMessage:
+      background: 'primary-light'  # Darker blue for better contrast with white text
+      darkModeBackground: 'background-dark'
+      textColor: 'primarybuttontext-light'
+      darkModeTextColor: 'primarybuttontext-dark'
+      timeColor: 'text-light'  # Darker text for better contrast
+      darkModeTimeColor: 'gray-300'  # Lighter color for dark mode contrast
+    
+    botMessage:
+      background: 'primary-light'
+      darkModeBackground: 'secondary-dark'  # Using secondary-dark for better contrast
+      textColor: 'primarybuttontext-light'
+      darkModeTextColor: 'primarybuttontext-dark'
+      timeColor: 'text-light'  # Darker text for better contrast
+      darkModeTimeColor: 'gray-300'  # Lighter color for dark mode contrast
+    
+    container:
+      background: 'paper-light'
+      darkModeBackground: 'paper-dark'
+      borderColor: 'secondary-light'
+      darkModeBorderColor: 'secondary-dark'
+    
+    inputField:
+      background: 'paper-light'
+      darkModeBackground: 'paper-dark'
+      textColor: 'text-light'
+      darkModeTextColor: 'text-dark'
+      borderColor: 'secondary-light'
+      darkModeBorderColor: 'secondary-dark'
+  
+  # PictureGallery section colors
+  pictureGallery:
+    caption:
+      background: 'secondary-light'
+      darkModeBackground: 'paper-dark'
+      textColor: 'text-light'
+      darkModeTextColor: 'text-dark'
+      borderColor: 'secondary-light'
+      darkModeBorderColor: 'secondary-dark'
+      
+  # Team section colors
+  team:
+    card:
+      background: 'paper-light'
+      darkModeBackground: 'paper-dark'
+      borderColor: 'secondary-light'
+      darkModeBorderColor: 'secondary-dark'
+      textColor: 'text-light'
+      darkModeTextColor: 'text-dark'
+    
+    nameColor: 'primary-light'
+    darkModeNameColor: 'primary-dark'
+    roleColor: 'secondary-light'
+    darkModeRoleColor: 'secondary-dark'
+    
+    social:
+      iconColor: 'primary-light'
+      darkModeIconColor: 'primary-dark'
+      hoverColor: 'secondary-light'
+      darkModeHoverColor: 'secondary-dark'
+
+  # Room section colors
+  room:
+    card:
+      background: 'paper-light'
+      darkModeBackground: 'paper-dark'
+      borderColor: 'accent-light'  # Using accent color for the border to make it stand out
+      darkModeBorderColor: 'accent-dark'
+      textColor: 'text-light'
+      darkModeTextColor: 'text-dark'
+    
+    nameColor: 'primary-light'
+    darkModeNameColor: 'primary-dark'
+    descriptionColor: 'textSecondary-light'
+    darkModeDescriptionColor: 'textSecondary-dark'
+    
+    price:
+      color: 'text-light'
+      darkModeColor: 'text-dark'
+      badgeBackground: 'accent-light'
+      darkModeBadgeBackground: 'accent-dark'
+      badgeText: 'white'
+      darkModeBadgeText: 'white'
+
+  # Testimonial section colors
+  testimonial:
+    card:
+      background: 'paper-light'
+      darkModeBackground: 'paper-dark'
+      borderColor: 'accent-light'
+      darkModeBorderColor: 'accent-dark'
+      textColor: 'text-light'
+      darkModeTextColor: 'text-dark'
+    
+    quoteColor: 'primary-light'
+    darkModeQuoteColor: 'primary-dark'
+    authorColor: 'secondary-light'
+    darkModeAuthorColor: 'secondary-dark'
+    ratingColor: 'accent-light'
+    darkModeRatingColor: 'accent-dark'
+
+  # Contact section colors
+  contact:
+    form:
+      background: 'paper-light'
+      darkModeBackground: 'paper-dark'
+      borderColor: 'secondary-light'
+      darkModeBorderColor: 'secondary-dark'
+      
+    input:
+      background: 'white'
+      darkModeBackground: 'background-dark'
+      borderColor: 'secondary-light'
+      darkModeBorderColor: 'secondary-dark'
+      focusBorderColor: 'primary-light'
+      darkModeFocusBorderColor: 'primary-dark'
+      textColor: 'text-light'
+      darkModeTextColor: 'text-dark'
+      
+    label:
+      color: 'primary-light'
+      darkModeColor: 'primary-dark'
+      
+    submitButton:
+      background: 'primary-light'
+      darkModeBackground: 'primary-dark'
+      textColor: 'white'
+      darkModeTextColor: 'white'
+      hoverBackground: 'secondary-light'
+      darkModeHoverBackground: 'secondary-dark'
+
+  # Map section colors
+  map:
+    marker:
+      color: 'primary-light'
+      darkModeColor: 'primary-dark'
+      borderColor: 'white'
+      darkModeBorderColor: 'background-dark'
+      
+    infoWindow:
+      background: 'paper-light'
+      darkModeBackground: 'paper-dark'
+      textColor: 'text-light'
+      darkModeTextColor: 'text-dark'
+      borderColor: 'accent-light'
+      darkModeBorderColor: 'accent-dark'
+
+  # These are used by the SectionBlock component when sectionType is specified
+  sections:
+    default:
+      background: 'paper-light'  # White background for sections
+      darkModeBackground: 'paper-dark'  # Dark paper background for dark mode
+      
+    team:
+      background: 'background-light'  # Light grey background
+      darkModeBackground: 'background-dark'  # Dark background
+      
+    faq:
+      background: 'paper-light'  # White background
+      darkModeBackground: 'paper-dark'  # Dark paper background
+      
+    pictureGallery:
+      background: 'background-light'  # Light grey background
+      darkModeBackground: 'background-dark'  # Dark background
+      
+    rooms:
+      background: 'paper-light'  # White background
+      darkModeBackground: 'paper-dark'  # Dark paper background
+      
+    services:
+      background: 'background-light'  # Light grey background
+      darkModeBackground: 'background-dark'  # Dark background
+      
+    testimonials:
+      background: 'paper-light'  # White background
+      darkModeBackground: 'paper-dark'  # Dark paper background
+      
+    contact:
+      background: 'background-light'  # Light grey background
+      darkModeBackground: 'background-dark'  # Dark background
+      
+    chatbot:
+      background: 'paper-light'  # White background
+      darkModeBackground: 'paper-dark'  # Dark paper background
+      
+    map:
+      background: 'background-light'  # Light grey background
+      darkModeBackground: 'background-dark'  # Dark background

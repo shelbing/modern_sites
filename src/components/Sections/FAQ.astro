@@ -1,0 +1,90 @@
+---
+/**
+ * FAQ Component
+ * 
+ * This component renders a Frequently Asked Questions (FAQ) section using an accordion-style layout.
+ * It displays a list of questions and answers, allowing users to expand and collapse each item.
+ * 
+ * Features:
+ * - Responsive design with left-aligned content
+ * - Accordion functionality for expanding/collapsing FAQ items
+ * - Support for HTML content in answers, including links and lists
+ * - Dark mode support with appropriate color schemes
+ * - All accordion items are closed by default on page load
+ * - Centralized font size configuration for questions and answers
+ * 
+ * Usage:
+ * <FAQ blok={storyblokData} />
+ * 
+ * Note: 
+ * - The accordion functionality relies on data attributes. Ensure proper JavaScript
+ *   is included to handle the toggle behavior.
+ */
+
+import SectionBlock from '../Base/SectionBlock.astro';
+// Font sizes are used via Tailwind utility classes
+import colors from '../../config/colors.js';
+import type { Colors } from '../../config/colors';
+
+// Extend colors with the utility functions we know exist but TypeScript doesn't recognize
+type ColorUtils = {
+  getTailwindColorClasses: (section: string) => Record<string, string>;
+};
+
+const colorsWithUtils = colors as unknown as Colors & ColorUtils;
+
+interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+interface FAQProps {
+  blok: {
+    header: string;
+    subHeader: string;
+    faqItems: FAQItem[];
+    BackgroundColor?: string; // Optional custom background color class
+  };
+}
+
+const { blok } = Astro.props as FAQProps;
+const { header, subHeader, faqItems } = blok;
+
+// Use Tailwind classes for font sizes
+const questionFontClass = 'text-faq-question-mobile md:text-faq-question';
+const answerFontClass = 'text-faq-answer md:text-faq-answer-md';
+
+// Get color classes from centralized configuration using the proper utility function
+const faqColors = colorsWithUtils.getTailwindColorClasses('faq');
+
+// Compose color classes for each FAQ element
+const questionColorClasses = faqColors['faq-question-bg'] + ' ' + faqColors['faq-question-text'] + ' ' + faqColors['faq-question-border'];
+const questionOpenedColorClasses = faqColors['faq-questionOpened-bg'] + ' ' + faqColors['faq-questionOpened-text'] + ' ' + faqColors['faq-questionOpened-border'];
+const answerColorClasses = faqColors['faq-answer-bg'] + ' ' + faqColors['faq-answer-text'] + ' ' + faqColors['faq-answer-border'];
+---
+
+<!-- Optional custom background color from Storyblok -->
+<SectionBlock 
+  header={header} 
+  subHeader={subHeader}
+  sectionType="faq"
+  backgroundColorClass={blok.BackgroundColor}
+>
+  <div id="accordion-flush" data-accordion="collapse" data-active-classes={questionOpenedColorClasses} data-inactive-classes={questionColorClasses} class="w-full max-w-screen-xl mx-auto">
+    {faqItems.map((item: FAQItem, index: number) => (
+      <div class="text-left mb-4 overflow-hidden rounded-xl shadow-sm">
+        <h2 id={`accordion-flush-heading-${index + 1}`}>
+          <button type="button" class={`flex justify-between items-center py-5 w-full font-medium text-left px-4 rounded-t-xl ${questionFontClass} ${questionColorClasses}`} data-accordion-target={`#accordion-flush-body-${index + 1}`} aria-expanded="false" aria-controls={`accordion-flush-body-${index + 1}`}>
+            <span>{item.question}</span>
+            <svg data-accordion-icon="" class="w-6 h-6 shrink-0" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+          </button>
+        </h2>
+        <div id={`accordion-flush-body-${index + 1}`} class="hidden" aria-labelledby={`accordion-flush-heading-${index + 1}`}>
+          <div class={`py-5 rounded-b-xl ${answerColorClasses}`}>
+            <p class={`mb-2 px-4 ${answerFontClass}`} set:html={item.answer}></p>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div> 
+</SectionBlock>

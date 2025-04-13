@@ -1,0 +1,39 @@
+---
+// PreviewBadge.astro
+export interface Props {
+  text?: string;
+}
+
+const { text = 'Dies ist ein Preview' } = Astro.props;
+
+function isVercelPreview() {
+  if (import.meta.env.VERCEL_ENV === 'preview') {
+    return true;
+  }
+
+  return false;
+}
+
+const showBadge = isVercelPreview();
+---
+
+{showBadge && (
+  <div class="preview-badge">
+    {text}
+  </div>
+)}
+
+<style>
+  .preview-badge {
+    position: fixed;
+    top: 0;
+    right: 0;
+    background-color: #ffcc00;
+    color: #000;
+    padding: 5px 10px;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 1000;
+    border-bottom-left-radius: 5px;
+  }
+</style>

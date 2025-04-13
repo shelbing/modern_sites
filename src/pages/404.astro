@@ -1,0 +1,35 @@
+---
+import Layout from '../layouts/Layout.astro';
+import NotFound from '../components/Error/NotFound.astro';
+
+// Get the current URL path
+const path = Astro.url.pathname;
+
+// Extract language from URL path (first two letters after the slash)
+// Default to 'en' if not found or not a supported language
+let lang = 'en';
+const pathSegments = path.split('/').filter(segment => segment);
+
+if (pathSegments.length > 0) {
+  const firstSegment = pathSegments[0];
+  // Check if the first segment is a valid language code (2 characters)
+  if (firstSegment && firstSegment.length === 2) {
+    // Supported languages
+    const supportedLangs = ['de', 'en', 'fr', 'es'];
+    if (supportedLangs.includes(firstSegment)) {
+      lang = firstSegment;
+    }
+  }
+}
+
+const title = {
+  en: '404 - Page Not Found',
+  de: '404 - Seite nicht gefunden',
+  fr: '404 - Page Non Trouvée',
+  es: '404 - Página No Encontrada'
+};
+---
+
+<Layout title={title[lang as keyof typeof title] || title.en}>
+  <NotFound lang={lang} />
+</Layout>

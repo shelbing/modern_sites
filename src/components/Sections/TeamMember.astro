@@ -1,0 +1,119 @@
+---
+import Image from "../Base/Image.astro";
+import { getColor } from '../../config/colors';
+
+const { member } = Astro.props;
+const {LastName, FirstName, Title, image, Citation} = member;
+const fileName = image.filename;
+
+// Define TypeScript interface for team color types
+interface TeamColorConfig {
+  name?: {
+    color?: string;
+    darkModeColor?: string;
+  };
+  title?: {
+    color?: string;
+    darkModeColor?: string;
+  };
+  citation?: {
+    gradientFrom?: string;
+    gradientTo?: string;
+    darkModeGradientFrom?: string;
+    darkModeGradientTo?: string;
+    glowColor?: string;
+    darkModeGlowColor?: string;
+  };
+}
+
+// Get colors from centralized configuration with type safety
+const teamColors = getColor('team') as TeamColorConfig || {};
+
+// Safely access nested properties with fallbacks for type safety
+const nameColor = teamColors?.name?.color || '#305F85'; // Default to primary-light
+const darkModeNameColor = teamColors?.name?.darkModeColor || '#6B9AC4'; // Default to primary-dark
+const titleColor = teamColors?.title?.color || '#566573'; // Default to textSecondary-light
+const darkModeTitleColor = teamColors?.title?.darkModeColor || '#A0AEC0'; // Default to textSecondary-dark
+
+interface BildDaten {
+  imageUrl: string;
+  height: number;
+  width: number;
+  backgroundRemoval: boolean;
+  badges: Array<{
+    text: string;
+    position: string;
+    color: string;
+    darkModeColor?: string;
+  }>;
+}
+
+const bildDaten: BildDaten = {
+  imageUrl: fileName,
+  height: 100,
+  width: 100,
+  backgroundRemoval: true,
+  badges: [
+    { text: FirstName+" "+LastName, position: 'upper-left', color: nameColor, darkModeColor: darkModeNameColor },
+    { text: Title, position: 'lower-left', color: titleColor, darkModeColor: darkModeTitleColor }
+  ]
+};
+---
+<div class="team-member-card group">
+  <div class="relative overflow-hidden rounded-lg bg-white dark:bg-gray-800 shadow-lg dark:shadow-xl transition-transform duration-300 group-hover:scale-[1.02]">
+    <Image imageUrl={fileName} width=400 badges={bildDaten.badges}/>
+    <div class="citation-wrapper">
+      <p class="citation-text">
+        {Citation}
+      </p>
+    </div>
+  </div>
+</div>
+
+<style define:vars={{
+  '--citation-from': `theme(colors.${teamColors?.citation?.gradientFrom || 'primary.light'})`,
+  '--citation-to': `theme(colors.${teamColors?.citation?.gradientTo || 'secondary.light'})`,
+  '--citation-dark-from': `theme(colors.${teamColors?.citation?.darkModeGradientFrom || 'primary.dark'})`,
+  '--citation-dark-to': `theme(colors.${teamColors?.citation?.darkModeGradientTo || 'secondary.dark'})`,
+  '--glow-color': `theme(colors.${teamColors?.citation?.glowColor || 'accent.light'})`,
+  '--glow-color-dark': `theme(colors.${teamColors?.citation?.darkModeGlowColor || 'accent.dark'})`
+}}>
+  .team-member-card {
+    @apply my-6 mx-2 w-full;
+  }
+
+  .citation-wrapper {
+    @apply mt-2 py-2 px-4 
+           bg-gradient-to-r 
+           rounded-lg shadow-md 
+           transform transition-all duration-300;
+    background-image: linear-gradient(to right, var(--citation-from), var(--citation-to));
+    color: theme(colors.white);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); /* Add text shadow for better readability */
+  }
+
+  .citation-text {
+    @apply text-center text-base md:text-lg 
+           leading-snug font-medium
+           opacity-100;
+    letter-spacing: 0.01em; /* Slightly increase letter spacing for better readability */
+  }
+
+  /* Add a subtle glow effect on hover */
+  .team-member-card:hover .citation-wrapper {
+    @apply shadow-lg;
+    box-shadow: 0 0 20px var(--glow-color);
+  }
+
+  /* Dark mode styles */
+  @media (prefers-color-scheme: dark) {
+    .citation-wrapper {
+      background-image: linear-gradient(to right, var(--citation-dark-from), var(--citation-dark-to));
+      color: theme(colors.gray.100);
+    }
+
+    .team-member-card:hover .citation-wrapper {
+      box-shadow: 0 0 20px var(--glow-color-dark);
+    }
+  }
+</style>

@@ -1,0 +1,276 @@
+---
+/**
+ * Image Component
+ * 
+ * This component renders an image with optional badges, header text, and link functionality.
+ * It supports both direct props and Storyblok CMS integration, and utilizes Cloudinary for image hosting and transformations.
+ * 
+ * Features:
+ * - Displays an image with customizable dimensions and transformations
+ * - Supports multiple badges with configurable text, position, and colors
+ * - Optional header text with customizable colors
+ * - Can wrap the image in a link
+ * - Responsive design with grid layout support
+ * - Compatible with Storyblok CMS data structure
+ * - Leverages Cloudinary for efficient image delivery and on-the-fly transformations
+ * 
+ * Cloudinary Integration:
+ * - Supports both full Cloudinary URLs and relative paths for image sources
+ * - For full URLs: "https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/sample.jpg"
+ * - For relative paths: "/v1234567890/sample.jpg" (assumes Cloudinary base URL is set elsewhere)
+ * - Uses Cloudinary's transformation parameters for resizing, cropping, and other image manipulations
+ * - Enables dynamic image optimization based on device and network conditions
+ * 
+ * Usage:
+ * <Image 
+ *   imageUrl="https://res.cloudinary.com/your-cloud-name/image/upload/v1234567890/sample.jpg"
+ *   alt="Description of image"
+ *   badges={[{ text: "New", position: "upper-left", color: "#ff0000" }]}
+ *   headerText="Image Title"
+ *   link="/some-page"
+ *   transformation="w_500,h_300,c_fill"
+ * />
+ * 
+ * Or with relative path:
+ * <Image 
+ *   imageUrl="/v1234567890/sample.jpg"
+ *   alt="Description of image"
+ *   transformation="w_500,h_300,c_fill"
+ * />
+ * 
+ * Or with Storyblok:
+ * <Image blok={storyblokImageData} />
+ */
+
+// Import types from shared types file
+import type { BadgeProps } from '../../types/Image';
+
+// Define ImageComponentDirectProps interface for direct image component properties
+interface ImageComponentDirectProps {
+  imageUrl: string;
+  alt: string;
+  className?: string;
+  link?: string;
+  headerText?: string;
+  headerColor?: string 
+  headerTextColor?: string 
+  rows?: number;
+  cols?: number;
+  transformation?: string;
+  height?: string;
+  width?: string;
+  badges?: BadgeProps[];
+  // Keeping old badge properties for backward compatibility
+  badgeText?: string;
+  badgePosition?: 'upper-left' | 'upper-right' | 'lower-left' | 'lower-right';
+  badgeColor?: string 
+  badgeTextColor?: string 
+  backgroundRemoval?: boolean;
+}
+
+// Define StoryblokBlok interface extending ImageComponentDirectProps
+interface StoryblokBlok extends ImageComponentDirectProps {
+  component: string;
+}
+
+// Define ImageComponentStoryblokProps interface for Storyblok specific props
+interface ImageComponentStoryblokProps {
+  blok: StoryblokBlok;
+}
+
+// Define ImageComponentProps type as union of direct and Storyblok props
+type ImageComponentProps = ImageComponentDirectProps | ImageComponentStoryblokProps;
+
+// Cast Astro.props to ImageComponentProps
+const props = Astro.props as ImageComponentProps;
+
+// Function to get properties, supporting both direct and Storyblok interfaces
+const getProp = <T extends keyof ImageComponentDirectProps>(key: T): ImageComponentDirectProps[T] => {
+  
+  if ('blok' in props) {
+    return props.blok[key];
+  }
+  return props[key];
+};
+
+// Extract properties from props
+const imageUrl = getProp('imageUrl');
+const alt = getProp('alt') || 'Image';
+const className = getProp('className') || '';
+const link = getProp('link');
+const headerText = getProp('headerText');
+const headerColor = getProp('headerColor');
+const headerTextColor = getProp('headerTextColor');
+const rows = getProp('rows') || 1;
+const cols = getProp('cols') || 1;
+const transformation = getProp('transformation');
+const height = getProp('height');
+const width = getProp('width');
+const backgroundRemoval = getProp('backgroundRemoval');
+
+// Handle both new multiple badges and old single badge
+const newBadges = getProp('badges') || [];
+const oldBadge = getProp('badgeText') ? [{
+  text: getProp('badgeText'),
+  position: getProp('badgePosition'),
+  color: getProp('badgeColor'),
+  textColor: getProp('badgeTextColor'),
+  // Type safety - add dark mode properties as optional
+  darkModeColor: undefined,
+  darkModeTextColor: undefined
+}] : [];
+
+const badges = newBadges.length > 0 ? newBadges : oldBadge;
+
+// Define base URL and cloud code for Cloudinary
+const baseUrl = "https://res.cloudinary.com/dgyarghwg/image/upload/";
+const cloudCode = "v1712731411/";
+
+// Function to get color value from string or ColorObject
+const getColor = (color: string | undefined, defaultColor: string): string => {
+  return color || defaultColor;
+};
+
+// Get colors for header
+const rectangleColor = getColor(headerColor, '#000000');
+const lightTextColor = getColor(headerTextColor, '#ffffff');
+
+// Construct transformation string for Cloudinary
+const transform = [
+  transformation,
+  backgroundRemoval ? 'e_background_removal' : null,
+  'e_improve,q_auto,f_auto',
+  height ? `h_${height}` : null,
+  width ? `w_${width}` : null
+].filter(Boolean).join(',');
+
+// Handle different URL types: Cloudinary, Storyblok, and others
+const fullImageUrl = (() => {
+  if (imageUrl.startsWith('https://a.storyblok.com/')) {
+    // Storyblok asset URL
+    return `${imageUrl}/m/${width}x${height}/filters:quality(80)`;
+  } else if (imageUrl.startsWith('http')) {
+    // Other full URLs (including Cloudinary)
+    return imageUrl.includes('/upload/') 
+      ? imageUrl.replace('/upload/', `/upload/${transform}/`) 
+      : imageUrl;
+  } else {
+    // Partial Cloudinary URL
+    return `${baseUrl}${transform}/${cloudCode}${imageUrl}`;
+  }
+})();
+
+// Function to get badge position CSS classes
+const getBadgePosition = (position: string): string => {
+  const positions = {
+    'upper-left': 'top-2 left-2',
+    'upper-right': 'top-2 right-2',
+    'lower-left': 'bottom-2 left-2',
+    'lower-right': 'bottom-2 right-2',
+  };
+  return positions[position as keyof typeof positions] || positions['lower-left'];
+};
+---
+
+<style>
+  /* Styles for image container */
+  .image-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Styles for image header */
+  .image-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 7px;
+    text-align: center;
+    z-index: 1;
+  }
+
+  /* Styles for image wrapper */
+  .image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Styles for image */
+  .image-wrapper img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  /* Styles for badge */
+  .badge {
+    position: absolute;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: bold;
+    z-index: 2;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  
+  /* Dark mode styles for badges with dark mode colors */
+  @media (prefers-color-scheme: dark) {
+    .badge[data-has-dark-mode="true"] {
+      background-color: var(--badge-bg-dark) !important;
+      color: var(--badge-text-dark) !important;
+    }
+  }
+</style>
+
+<!-- Main image container -->
+<div class={`image-container ${className} row-span-${rows} col-span-${cols}`}>
+  <!-- Conditional rendering of header text -->
+  {headerText && (
+    <div 
+      class="image-header" 
+      style={`background-color: ${rectangleColor}; color: ${lightTextColor};`}
+    >
+      {headerText}
+    </div>
+  )}
+  <div class="image-wrapper">
+    <!-- Conditional rendering of image with or without link -->
+    {link ? (
+      <a href={link} class="image-link">
+        <img src={fullImageUrl} alt={alt} />
+      </a>
+    ) : (
+      <img src={fullImageUrl} alt={alt} />
+    )}
+    <!-- Render badges -->
+    {badges.map((badge) => {
+      const hasDarkModeColors = badge.darkModeColor || badge.darkModeTextColor;
+      return (
+        <div 
+          class={`badge ${getBadgePosition(badge.position || 'lower-left')}`}
+          style={hasDarkModeColors ? {
+            // Light mode colors as CSS variables
+            '--badge-bg-light': getColor(badge.color, '#000000'),
+            '--badge-text-light': getColor(badge.textColor, '#ffffff'),
+            // Dark mode colors as CSS variables
+            '--badge-bg-dark': getColor(badge.darkModeColor, badge.color || '#000000'),
+            '--badge-text-dark': getColor(badge.darkModeTextColor, badge.textColor || '#ffffff'),
+            // Initial color application
+            backgroundColor: `var(--badge-bg-light)`,
+            color: `var(--badge-text-light)`
+          } : `
+            background-color: ${getColor(badge.color, '#000000')};
+            color: ${getColor(badge.textColor, '#ffffff')};
+          `}
+          data-has-dark-mode={hasDarkModeColors ? 'true' : 'false'}
+        >
+          {badge.text}
+        </div>
+      );
+    })}
+  </div>
+</div>

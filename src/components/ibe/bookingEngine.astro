@@ -1,0 +1,18 @@
+---
+/**
+ * Internet Booking Engine (IBE) Component
+ * 
+ * Props:
+ * @prop {string} language - The current interface language
+ * @prop {string} hotelCode - The property code from environment variables
+ */
+ import { loadEnv } from "vite";
+const hotelCode = loadEnv("", process.cwd(), "PROPERTY").PROPERTY;
+const {language} = Astro.props
+
+import IBEBookingEngine from "./bookingEngine.svelte"
+
+
+---o
+<!-- Render the Svelte booking engine component -->
+<IBEBookingEngine client:load language={language} hotelCode={hotelCode}/>

@@ -1,0 +1,103 @@
+---
+import { useStoryblokApi } from '@storyblok/astro'
+import { loadEnv } from "vite";
+import { getSelectedFontCombination } from '../../config/fontCombinations';
+
+// Get the selected font combination from environment variable
+const selectedFontCombination = getSelectedFontCombination();
+console.log(`Fonts.astro: Using selected font combination: ${selectedFontCombination.name}`);
+
+const property = loadEnv("", process.cwd(), "PROPERTY").PROPERTY;
+const storyblokApi = useStoryblokApi();
+const { data } = await storyblokApi.get('cdn/stories/' + property + '/grunddaten', {
+    language: "de",
+    version: import.meta.env.DEV ? "draft" : "published",
+});
+
+const fonts = data.story.content.body.filter((item: { component: string; }) => item.component === 'Fonts');
+
+interface FontOption {
+  heading: string;
+  body: string;
+  headingWeights: string;
+  bodyWeights: string;
+}
+
+
+const selectedFont : FontOption = 
+   {
+    heading: fonts[0].HeadingFont,
+    body: fonts[0].BodyFont,
+    headingWeights: fonts[0].HeadingWeights,
+    bodyWeights: fonts[0].BodyWeights
+   } 
+
+console.log(`Fonts.astro: CMS font heading: ${selectedFont.heading}`);
+console.log(`Fonts.astro: CMS font body: ${selectedFont.body}`);
+console.log(`Fonts.astro: Using custom font combination heading: ${selectedFontCombination.heading}`);
+console.log(`Fonts.astro: Using custom font combination body: ${selectedFontCombination.body}`);
+ ---  
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+{selectedFont && (
+  <link
+    href={`https://fonts.googleapis.com/css2?family=${selectedFont.heading.replace(' ', '+')}:wght@${selectedFont.headingWeights}&family=${selectedFont.body.replace(' ', '+')}:wght@${selectedFont.bodyWeights}&display=swap`}
+    rel="stylesheet"
+    data-source="cms-fonts"
+    onload="console.log('Fonts.astro: CMS fonts loaded successfully')"
+  />
+)}
+
+<style is:global>
+  :root {
+    /* Set variables from Storyblok CMS (these will be overridden by our custom fonts) */
+    --font-family-cms-heading: "{selectedFont.heading}", serif;
+    --font-family-cms-body: "{selectedFont.body}", sans-serif;
+    
+    /* Set variables from our font combinations config (these take precedence) */
+    --font-family-heading: "{selectedFontCombination.heading}", serif;
+    --font-family-body: "{selectedFontCombination.body}", sans-serif;
+  }
+</style>
+
+<!-- Inline script to set CSS variables directly -->
+<script is:inline define:vars={{ 
+  headingFont: selectedFontCombination.heading, 
+  bodyFont: selectedFontCombination.body,
+  cmsHeadingFont: selectedFont.heading,
+  cmsBodyFont: selectedFont.body
+}}>
+  // Set CSS variables directly in JavaScript
+  document.documentElement.style.setProperty('--font-family-heading', `"${headingFont}", serif`);
+  document.documentElement.style.setProperty('--font-family-body', `"${bodyFont}", sans-serif`);
+  document.documentElement.style.setProperty('--font-family-cms-heading', `"${cmsHeadingFont}", serif`);
+  document.documentElement.style.setProperty('--font-family-cms-body', `"${cmsBodyFont}", sans-serif`);
+  
+  console.log(`Fonts.astro: Set CSS variable --font-family-heading = "${headingFont}, serif"`);
+  console.log(`Fonts.astro: Set CSS variable --font-family-body = "${bodyFont}, sans-serif"`);
+</script>
+
+<!-- Font verification script -->
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('Fonts.astro: Verifying CMS font loading...');
+    
+    // Get the font link
+    const fontLink = document.querySelector('link[data-source="cms-fonts"]');
+    if (fontLink) {
+      console.log('Fonts.astro: CMS font link found');
+      
+      setTimeout(() => {
+        // Check if CSS variables are properly set
+        const computedStyle = getComputedStyle(document.documentElement);
+        const headingVar = computedStyle.getPropertyValue('--font-family-heading').trim();
+        const bodyVar = computedStyle.getPropertyValue('--font-family-body').trim();
+        
+        console.log(`Fonts.astro: CSS variable --font-family-heading = "${headingVar}"`);
+        console.log(`Fonts.astro: CSS variable --font-family-body = "${bodyVar}"`);
+      }, 1000);
+    } else {
+      console.error('Fonts.astro: CMS font link not found');
+    }
+  });
+</script>

@@ -1,0 +1,113 @@
+---
+import Layout from '../layouts/Layout.astro';
+import fontCombinations from '../config/fontCombinations';
+import { getSelectedFontCombination } from '../config/fontCombinations';
+import ReliableFontLoader from '../components/Scripts/ReliableFontLoader.astro';
+import FontDebugHelper from '../components/Scripts/FontDebugHelper.astro';
+import FontComparison from '../components/FontComparison.astro';
+
+const selectedFontCombination = getSelectedFontCombination();
+const currentFontIndex = fontCombinations.findIndex(font => font.name === selectedFontCombination.name) + 1;
+
+// Get the URL changed parameter if it exists
+const urlChanged = Astro.url.searchParams.get('changed') === 'true';
+
+// Enable debugging
+const showDebug = true;
+---
+
+<Layout title="Font Combinations Preview - Hotel Stern">
+  <!-- Load all Google Fonts for preview -->
+  <ReliableFontLoader debug={showDebug} />
+  
+  <!-- Add Font Debug Helper -->
+  <FontDebugHelper debug={showDebug} />
+  
+  <main class="container mx-auto px-4 py-8">
+    {urlChanged && (
+      <div class="mb-6 p-4 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-100 rounded-lg">
+        <p class="flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+          </svg>
+          Font combination changed successfully! The page has been refreshed with the new font.
+        </p>
+      </div>
+    )}
+    
+    <h1 class="text-4xl font-serif mb-8 text-sectionheader-light dark:text-sectionheader-dark">Font Combinations Preview</h1>
+    
+    <div class="mb-8 p-4 bg-background-light dark:bg-background-dark rounded-lg shadow">
+      <h2 class="text-2xl font-serif mb-2 text-sectionheader-light dark:text-sectionheader-dark">Currently Active Font</h2>
+      <div class="p-4 bg-paper-light dark:bg-paper-dark rounded-lg">
+        <p class="text-lg mb-2"><strong>Font Combination #{currentFontIndex}:</strong> {selectedFontCombination.name}</p>
+        <p class="text-lg mb-2"><strong>Heading Font:</strong> {selectedFontCombination.heading}</p>
+        <p class="text-lg mb-2"><strong>Body Font:</strong> {selectedFontCombination.body}</p>
+        <div class="mt-4">
+          <h3 class="font-serif text-3xl mb-2">Heading Example with Umlauts: Grüße aus Österreich</h3>
+          <p class="text-lg">Body text example with umlauts: Schöne Grüße aus München! Wir würden uns über Ihren Besuch freuen.</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="mb-8">
+      <h2 class="text-2xl font-serif mb-4 text-sectionheader-light dark:text-sectionheader-dark">All Font Combinations</h2>
+      <p class="mb-4 text-textSecondary-light dark:text-textSecondary-dark">
+        Click on "Activate" to switch to a specific font combination.
+      </p>
+      
+      <FontComparison showAll={true} debug={showDebug} />
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {fontCombinations.map((font, index) => (
+        <div class="p-4 bg-background-light dark:bg-background-dark rounded-lg shadow hover:shadow-lg transition-shadow">
+          <h2 class="text-xl font-bold mb-2 text-sectionheader-light dark:text-sectionheader-dark">
+            {index + 1}. {font.name}
+          </h2>
+          <div class="p-4 bg-paper-light dark:bg-paper-dark rounded-lg">
+            <p class="mb-2"><strong>Heading:</strong> {font.heading}</p>
+            <p class="mb-4"><strong>Body:</strong> {font.body}</p>
+            
+            <div class="mt-4 border-t pt-4">
+              <div class="mb-4">
+                <h3 class="text-xl mb-2" style={`font-family: "${font.heading}", serif`}>
+                  Heading Sample with Umlauts: Grüße aus Österreich
+                </h3>
+                <p style={`font-family: "${font.body}", sans-serif`}>
+                  Body text sample with umlauts: Schöne Grüße aus München! Wir würden uns über Ihren Besuch freuen.
+                </p>
+              </div>
+            </div>
+            
+            <div class="mt-4 text-center">
+              <a 
+                href={`/api/change-font?id=${index + 1}`} 
+                class="inline-block px-4 py-2 bg-primarybutton-light text-primarybuttontext-light dark:bg-primarybutton-dark dark:text-primarybuttontext-dark rounded hover:opacity-90"
+              >
+                Activate Font #{index + 1}
+              </a>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+    
+    <div class="mt-8 p-4 bg-background-light dark:bg-background-dark rounded-lg shadow">
+      <h2 class="text-2xl font-serif mb-4 text-sectionheader-light dark:text-sectionheader-dark">How to Change Fonts</h2>
+      <div class="p-4 bg-paper-light dark:bg-paper-dark rounded-lg">
+        <p class="mb-4">To change the font combination, use the following command:</p>
+        <pre class="bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-x-auto mb-4">npm run font &lt;number&gt;</pre>
+        <p class="mb-4">For example, to use the "Alpine Retreat" font combination:</p>
+        <pre class="bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-x-auto mb-4">npm run font 5</pre>
+        <p>After changing the font, restart the development server to see the changes.</p>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  pre {
+    font-family: monospace;
+  }
+</style>
