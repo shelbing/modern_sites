@@ -43,16 +43,28 @@ const lang = path.substring(0, 2)
 const story = path.substring(3)
 
 let content
-let pageTitle = "TITLE MISSING" // Default title if not found
+let pageTitle = "" // Will be set from grunddaten or content title
 
 try {
+    // First, fetch the grunddaten to get the default hotel title
+    const { data: grunddatenData } = await storyblokApi.get('cdn/stories/'+hotel+'/grunddaten', {
+        language: lang,
+        version: import.meta.env.DEV ? "draft" : "published",
+    });
+    
+    // Set default page title from grunddaten
+    if (grunddatenData?.story?.content?.Title && grunddatenData.story.content.Title.trim() !== "") {
+        pageTitle = grunddatenData.story.content.Title;
+    }
+    
+    // Now fetch the specific page content
     const { data } = await storyblokApi.get('cdn/stories/'+hotel+'/'+story, {
-        language:lang,
+        language: lang,
         version: import.meta.env.DEV ? "draft" : "published",
     });
     content = data.story.content;
     
-    // Set the page title from Storyblok's Title field if it exists and isn't empty
+    // Override the default title with the page-specific title if it exists
     if (content.Title && content.Title.trim() !== "") {
         pageTitle = content.Title;
     }
