@@ -26,9 +26,11 @@ interface Props {
     Mindestaufenthalt?: string | number;
     [key: string]: any;
   };
+  rooms?: any[];
+  services?: any[];
 }
 
-const { bundle } = Astro.props;
+const { bundle, rooms = [], services = [] } = Astro.props;
 
 // Format date if available
 const formatDate = (dateString: string | undefined) => {
@@ -140,10 +142,24 @@ if (bundle.Mindestaufenthalt) {
   </div>
 </div>
 
-<!-- Bundle Modal -->
-<BundleModal bundle={bundle} id={`bundle-modal-${bundle._uid}`} />
+<!-- Bundle Modal with rooms and services -->
+<BundleModal 
+  bundle={bundle} 
+  id={`bundle-modal-${bundle._uid}`}
+  rooms={rooms}
+  services={services}
+/>
 
 <script>
+  // Load the modal manager script only on the client-side
+  // The typeof check prevents SSR errors
+  if (typeof window !== 'undefined') {
+    // We'll dynamically import the script
+    import('../../scripts/modalManager.js')
+      .then(() => console.log('Modal manager loaded in BundleDisplay'))
+      .catch(err => console.error('Error loading modal manager:', err));
+  }
+  
   document.addEventListener('DOMContentLoaded', () => {
     // Get all show modal buttons
     const showModalButtons = document.querySelectorAll('.show-modal-btn');
@@ -155,10 +171,18 @@ if (bundle.Mindestaufenthalt) {
         if (!modalId) return;
         
         const modal = document.getElementById(modalId);
-        if (modal) {
-          // Show modal
-          modal.classList.remove('hidden');
-          document.body.classList.add('overflow-hidden');
+        // Use the global modalManager.showModal function that we defined in BundleModal.astro
+        // This function will handle showing the modal and triggering the API call
+        if (window.modalManager && typeof window.modalManager.showModal === 'function') {
+          console.log(`Opening modal with ID: ${modalId} using modalManager`);
+          window.modalManager.showModal(modalId);
+        } else {
+          // Fallback to direct DOM manipulation if the modalManager isn't available
+          console.warn('Modal manager not found, using fallback method');
+          if (modal) {
+            modal.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+          }
         }
       });
     });

@@ -17,20 +17,56 @@ interface Props {
     Title: string;
     [key: string]: any;
   }>;
+  rooms?: Array<any>;
+  services?: Array<any>;
   emptyMessage?: string;
 }
 
 const { 
   bundles = [], 
+  rooms = [],
+  services = [],
   emptyMessage = 'Keine Angebote verfügbar' 
 } = Astro.props;
+
+// Make rooms and services data available globally for debug purposes
+const globalScript = `
+console.log('[DEBUG] Setting global rooms data:', ${rooms.length} + ' items');
+console.log('[DEBUG] Setting global services data:', ${services.length} + ' items');
+
+// Store data in global variables for access in modals
+window.hotelRooms = ${JSON.stringify(rooms)};
+window.hotelServices = ${JSON.stringify(services)};
+
+// Re-export functions to window to ensure they're always available
+window.exportStoreHelpers = async function() {
+  try {
+    const storeModule = await import('/src/stores/roomStore.js');
+    window.loadRoomsData = storeModule.loadRoomsData;
+    window.loadServicesData = storeModule.loadServicesData;
+    window.setCurrentBundle = storeModule.setCurrentBundle;
+    console.log('[DEBUG] Store helper functions exported to window');
+  } catch (error) {
+    console.error('[DEBUG] Failed to export store helpers:', error);
+  }
+};
+
+// Execute immediately
+window.exportStoreHelpers();
+`;
 ---
+
+<script set:html={globalScript}></script>
 
 <div class="bundle-list-container">
   {bundles.length > 0 ? (
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {bundles.map(bundle => (
-        <BundleDisplay bundle={bundle} />
+        <BundleDisplay 
+          bundle={bundle} 
+          rooms={rooms} 
+          services={services} 
+        />
       ))}
     </div>
   ) : (

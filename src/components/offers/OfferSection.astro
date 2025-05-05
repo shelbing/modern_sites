@@ -15,9 +15,48 @@
 import SectionBlock from "../Base/SectionBlock.astro";
 import BundleListDisplay from "./BundleListDisplay.astro";
 
+interface BundleItem {
+  _uid: string;
+  Title: string;
+  Beschreibung?: {
+    content?: Array<{
+      content?: Array<{
+        text?: string;
+        type?: string;
+      }>;
+      type?: string;
+    }>;
+    [key: string]: any;
+  };
+  AnreiseVon?: string;
+  AnreiseBis?: string;
+  Mindestaufenthalt?: string | number;
+  [key: string]: any;
+}
+
+interface RoomItem {
+  _uid?: string;
+  Zimmercode?: string;
+  name?: string;
+  [key: string]: any;
+}
+
+interface ServiceItem {
+  _uid?: string;
+  Title?: string;
+  name?: string;
+  [key: string]: any;
+}
+
+interface OffersData {
+  bundles: BundleItem[];
+  rooms: RoomItem[];
+  services: ServiceItem[];
+}
+
 interface Props {
   blok: {
-    Header: string;
+    Header?: string;
     Subheader?: string;
     Kategorie?: string;
     [key: string]: any;
@@ -35,9 +74,12 @@ const {
 } = Astro.props;
 
 // Fetch offers data based on the Kategorie in the blok
-let offersData = { bundles: [], rooms: [], services: [] };
+let offersData: OffersData = { bundles: [], rooms: [], services: [] };
+// Initialize with a default value to fix the 'used before assigned' error
+let apiUrlForDisplay: URL = new URL("/api/ibe/allOffers", Astro.url);
 try {
   const apiUrl = new URL("/api/ibe/allOffers", Astro.url);
+  apiUrlForDisplay = apiUrl;
 
   // Add kategorie parameter if it exists in the blok
   if (blok.Kategorie) {
@@ -46,6 +88,38 @@ try {
 
   const response = await fetch(apiUrl.toString());
   offersData = await response.json();
+  
+  // Debug API response
+  console.log('[DEBUG] API Response:', {
+    bundles: offersData.bundles?.length || 0,
+    rooms: offersData.rooms?.length || 0,
+    services: offersData.services?.length || 0
+  });
+  console.log('[DEBUG] First bundle sample:', offersData.bundles?.[0] || 'No bundles');
+  console.log('[DEBUG] First room sample:', offersData.rooms?.[0] || 'No rooms');
+  console.log('[DEBUG] First service sample:', offersData.services?.[0] || 'No services');
+  
+  // Look for rich text in Beschreibung fields
+  if (offersData.bundles && offersData.bundles.length > 0) {
+    const firstBundleWithDesc = offersData.bundles.find((bundle: BundleItem) => bundle.Beschreibung);
+    if (firstBundleWithDesc && firstBundleWithDesc.Beschreibung) {
+      console.log('[DEBUG] Beschreibung structure sample:', firstBundleWithDesc.Beschreibung);
+      
+      // Analyze rich text structure (paragraphs/text types)
+      if (firstBundleWithDesc.Beschreibung.content) {
+        console.log('[DEBUG] Beschreibung content length:', 
+          firstBundleWithDesc.Beschreibung.content.length, 'items');
+        
+        // Check the first paragraph and text structure
+        const firstParagraph = firstBundleWithDesc.Beschreibung.content[0];
+        if (firstParagraph && firstParagraph.content) {
+          console.log('[DEBUG] First paragraph type:', firstParagraph.type);
+          console.log('[DEBUG] First paragraph text elements:', 
+            firstParagraph.content.length);
+        }
+      }
+    }
+  }
 } catch (error) {
   console.error("Error fetching offers:", error);
 }
@@ -59,8 +133,58 @@ try {
   backgroundColorClass={backgroundColorClass}
 >
   <div class="container mx-auto px-4 py-8">
+    {/* Debug information display */}
+    <div class="bg-gray-100 p-4 rounded-lg mb-4 text-xs font-mono overflow-auto max-h-60">
+      <details>
+        <summary class="font-bold cursor-pointer">API Data Debug (Click to expand)</summary>
+        <div class="mt-2 grid grid-cols-3 gap-2">
+          <div class="p-2 bg-blue-50 rounded">
+            <strong>Bundles:</strong> {offersData.bundles?.length || 0} items
+          </div>
+          <div class="p-2 bg-green-50 rounded">
+            <strong>Rooms:</strong> {offersData.rooms?.length || 0} items
+          </div>
+          <div class="p-2 bg-purple-50 rounded">
+            <strong>Services:</strong> {offersData.services?.length || 0} items
+          </div>
+        </div>
+        
+        {/* Rich Text Structure Debug */}
+        {offersData.bundles?.length > 0 && (
+          <div class="mt-2">
+            <div class="font-bold mb-1">Rich Text Structure:</div>
+            <div class="bg-yellow-50 p-2 rounded">
+              {(() => {
+                const bundleWithDesc = offersData.bundles.find((b: BundleItem) => b.Beschreibung);
+                if (bundleWithDesc?.Beschreibung?.content) {
+                  return (
+                    <div>
+                      <div><strong>Bundle Title:</strong> {bundleWithDesc.Title}</div>
+                      <div><strong>Content Blocks:</strong> {bundleWithDesc.Beschreibung.content.length}</div>
+                      <div class="mt-1 p-1 bg-white rounded">
+                        <strong>Structure:</strong> Content array with {bundleWithDesc.Beschreibung.content.length} paragraphs, 
+                        each with nested text blocks
+                      </div>
+                    </div>
+                  );
+                }
+                return <div>No rich text structure found</div>;
+              })()}
+            </div>
+          </div>
+        )}
+        
+        <div class="mt-2">
+          <div class="font-bold">API URL:</div>
+          <div class="bg-gray-200 p-1 rounded">{apiUrlForDisplay?.toString() || 'Not available'}</div>
+        </div>
+      </details>
+    </div>
+    
     <BundleListDisplay
       bundles={offersData.bundles}
+      rooms={offersData.rooms}
+      services={offersData.services}
       emptyMessage={`Keine Angebote${blok.Kategorie ? ` für ${blok.Kategorie}` : ""} verfügbar`}
     />
   </div>

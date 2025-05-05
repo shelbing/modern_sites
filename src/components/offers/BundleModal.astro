@@ -3,13 +3,18 @@
  * BundleModal Component
  * 
  * This component displays a modal with detailed information about a bundle offer.
- * It includes the bundle title, description, price, and availability.
+ * It includes a date picker for selecting arrival and departure dates,
+ * and displays availability information for the selected dates.
  */
 
 import { renderRichText } from '@storyblok/astro';
-import SimpleDatePicker from "../UI/SimpleDatePicker.astro";
 import RichText from "../Base/RichText.astro";
 import AvailabilityDisplay from "./AvailabilityDisplay.astro";
+import OfferDatePicker from "./OfferDatePicker.svelte";
+import AvailableRooms from './AvailableRooms.svelte';
+import AvailabilityRawDebug from './AvailabilityRawDebug.svelte';
+import AvailabilityLoader from './AvailabilityLoader.svelte';
+import '../../../src/stores/roomStore.js';
 
 interface Props {
   bundle: {
@@ -30,9 +35,12 @@ interface Props {
     [key: string]: any;
   };
   id: string;
+  rooms?: any[];
+  services?: any[];
+  minStay?: number;
 }
 
-const { bundle, id } = Astro.props;
+const { id, bundle, minStay = 3, rooms = [], services = [] } = Astro.props;
 
 // Format date if available
 const formatDate = (dateString: string | undefined) => {
@@ -95,8 +103,8 @@ if (bundle.Beschreibung) {
 const validFrom = formatDate(bundle.AnreiseVon);
 const validTo = formatDate(bundle.AnreiseBis);
 
-// Process minimum stay if available
-let minStay = null;
+// Process minimum stay if available from the bundle data (takes precedence over prop)
+let effectiveMinStay = minStay; // Start with the prop value
 if (bundle.Mindestaufenthalt) {
   // Convert to number if it's a string
   const stayValue = typeof bundle.Mindestaufenthalt === 'string' 
@@ -105,7 +113,7 @@ if (bundle.Mindestaufenthalt) {
   
   // Only use valid numbers
   if (!isNaN(stayValue) && stayValue > 0) {
-    minStay = stayValue;
+    effectiveMinStay = stayValue;
   }
 }
 
@@ -113,13 +121,13 @@ const imageUrl = bundle.TeaserImage?.filename || "/images/placeholder.jpg";
 ---
 
 <!-- Modal backdrop -->
-<div id={id} class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden">
-  <!-- Modal container -->
-  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-2/3 h-2/3 max-h-[80vh] flex flex-col overflow-hidden">
+<div id={id} class="fixed inset-0 z-50 flex items-center justify-center hidden overflow-auto bg-black bg-opacity-50 transition-opacity duration-300">
+
+  <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-auto transition-colors duration-200">
     <!-- Modal header -->
     <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
       <h2 class="text-2xl font-bold text-gray-900 dark:text-white text-left">{bundle.Title}</h2>
-      <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none modal-close">
+      <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none" onclick="this.closest('.fixed').classList.add('hidden'); document.body.classList.remove('overflow-hidden'); if(window.setStartDate) window.setStartDate(null); if(window.setEndDate) window.setEndDate(null);">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
@@ -158,7 +166,6 @@ const imageUrl = bundle.TeaserImage?.filename || "/images/placeholder.jpg";
         
         <!-- Details section -->
         <div class="text-left">
-          
           <div class="rich-text-container text-left">
             {richTextContent ? (
               <div class="font-sans rich-text text-gray-700 dark:text-gray-300 text-left" set:html={richTextContent}></div>
@@ -171,148 +178,114 @@ const imageUrl = bundle.TeaserImage?.filename || "/images/placeholder.jpg";
       
       <!-- Availability Display (Full Width) -->
       {bundle.Categories && (
-        <div class="w-full p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 text-left">
-          <h3 class="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200 text-left">Verfügbare Zimmerkategorien</h3>
-          <p class="text-gray-700 dark:text-gray-300 text-left">{bundle.Categories}</p>
-          
-          <!-- Availability data will be displayed here -->
-          <div id={`availability-container-${id}`} class="mt-4 hidden">
-            <div class="flex justify-between items-center mb-2">
-              <h4 class="font-medium text-gray-800 dark:text-gray-200">Verfügbarkeitsübersicht</h4>
-              <span id={`total-availability-${id}`} class="text-green-600 dark:text-green-400 font-medium"></span>
-            </div>
-            
-            <!-- Date range calendar picker with Flatpickr component -->
-            <div class="mb-4 border border-gray-200 dark:border-gray-700 rounded-lg p-3 bg-gray-50 dark:bg-gray-800">
-              <div class="flex flex-col space-y-2">
-                <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Zeitraum auswählen:</div>
-                <div class="flex flex-wrap items-center gap-3">
-                  <div class="flex-1">
-                    <SimpleDatePicker
-                      id={`date-from-${id}`}
-                      label="Von:"
-                      name="dateFrom"
-                      initialDate={bundle.AnreiseVon}
-                      minDate={bundle.AnreiseVon}
-                      maxDate={bundle.AnreiseBis}
-                      required={true}
-                    />
-                  </div>
-                  <div class="flex-1">
-                    <SimpleDatePicker
-                      id={`date-to-${id}`}
-                      label="Bis:"
-                      name="dateTo"
-                      initialDate={bundle.AnreiseBis}
-                      minDate={bundle.AnreiseVon}
-                      maxDate={bundle.AnreiseBis}
-                      required={true}
-                    />
-                  </div>
-                  <div class="flex gap-2 mt-4">
-                    <button 
-                      id={`date-filter-apply-${id}`}
-                      class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded px-3 py-1"
-                    >
-                      Anwenden
-                    </button>
-                    <button 
-                      id={`date-filter-reset-${id}`}
-                      class="bg-gray-300 hover:bg-gray-400 text-gray-800 text-sm font-medium rounded px-3 py-1"
-                    >
-                      Zurücksetzen
-                    </button>
-                  </div>
+        <div class="w-full p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 text-left">
+                   
+          <!-- Date selection and available rooms section -->
+          <div class="">
+           
+            <div class="mb-4 border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white  dark:bg-gray-800">
+              <div class="flex flex-wrap md:flex-nowrap gap-6 justify-between">
+                <!-- Date picker column with max-width: 40% -->
+                <div class="w-full md:w-2/5 max-w-[40%]">
+                  <OfferDatePicker
+                    client:only="svelte"
+                    minArrival={new Date(bundle.AnreiseVon || new Date())}
+                    maxArrival={new Date(bundle.AnreiseBis || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000))}
+                    minStay={minStay || 3}
+                    fullyBookedDays={[]}
+                    adults={2}
+                    children={0}
+                  />
                 </div>
+                        
+                <!-- Loading indicator -->
+                <div id={`availability-loading-${id}`} class="w-full md:w-3/5 max-w-[60%] flex justify-center items-center">
+                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+                </div>
+                
+                <!-- Available rooms container (hidden initially) -->
+                <div id={`available-rooms-container-${id}`} class="w-full md:w-3/5 max-w-[60%] hidden">
+                  <!-- This div will be populated by the AvailableRooms component -->
+                  <AvailableRooms
+                    client:only="svelte"
+                    bundleData={JSON.stringify(bundle)}
+                    roomsData={JSON.stringify(rooms)}
+                    servicesData={JSON.stringify(services)}
+                    showRoomDebug={true}
+                  />
+                  
+                  
+                </div>
+                
+                <!-- Add the AvailabilityLoader component to handle data loading using Svelte -->
+                <AvailabilityLoader
+                  client:only="svelte"
+                  id={id}
+                  bundleData={JSON.stringify(bundle)}
+                  roomsData={JSON.stringify(rooms)}
+                  servicesData={JSON.stringify(services)}
+                />
               </div>
             </div>
+          </div>
             
             <div id={`availability-dates-${id}`} class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mt-2">
               <!-- Availability data will be inserted here by JavaScript -->
             </div>
-          </div>
-          
-          <!-- Loading indicator -->
-          <div id={`availability-loading-${id}`} class="mt-4">
-            <p class="text-gray-500 dark:text-gray-400 text-center italic">Verfügbarkeit wird geprüft...</p>
-          </div>
-        </div>
+          </div>         
+     
       )}
     </div>
     
     <!-- Modal footer -->
-    <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-      <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded modal-close">
+    <div class="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end items-center">
+      <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-medium py-2 px-4 rounded" onclick="this.closest('.fixed').classList.add('hidden'); document.body.classList.remove('overflow-hidden'); if(window.setStartDate) window.setStartDate(null); if(window.setEndDate) window.setEndDate(null);">
         Schließen
-      </button>
-      <button class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded shadow-md">
-        Buchen
       </button>
     </div>
   </div>
 </div>
 
+<script>
+  import { setStartDate, setEndDate } from '../../../src/stores/roomStore.js';
+  if (typeof window !== 'undefined') {
+    window.setStartDate = setStartDate;
+    window.setEndDate = setEndDate;
+  }
+</script>
 <script define:vars={{ id: id, bundle: bundle }}>
+  // Load the modal manager script only on the client-side
+  // The typeof check prevents SSR errors
+  if (typeof window !== 'undefined') {
+    // We'll dynamically import the script
+    import('../../../src/scripts/modalManager.js')
+      .then(() => {
+        console.log('Modal manager loaded in BundleModal');
+      })
+      .catch(err => console.error('Error loading modal manager:', err));
+  }
+  
+  // Local modal variables
+  const modal = document.getElementById(id);
+  
   document.addEventListener('DOMContentLoaded', () => {
-    const modal = document.getElementById(id);
-    
-    // Function to check room availability
-    async function checkRoomAvailability() {
-      if (bundle.Categories) {
-        try {
-          // Show loading indicator
-          const loadingElement = document.getElementById(`availability-loading-${id}`);
-          const availabilityContainer = document.getElementById(`availability-container-${id}`);
-          
-          if (loadingElement) loadingElement.classList.remove('hidden');
-          if (availabilityContainer) availabilityContainer.classList.add('hidden');
-          
-          const apiUrl = new URL('/api/ibe/roomsAvailability', window.location.origin);
-          
-          // Add parameters to the API request
-          apiUrl.searchParams.set('categories', bundle.Categories);
-          
-          // Add arrival date parameters if available
-          if (bundle.AnreiseVon) {
-            apiUrl.searchParams.set('anreiseVon', bundle.AnreiseVon);
-          }
-          
-          if (bundle.AnreiseBis) {
-            apiUrl.searchParams.set('anreiseBis', bundle.AnreiseBis);
-          }
-          
-          // Add Basisrate parameter if available
-          if (bundle.Basisrate) {
-            apiUrl.searchParams.set('ratePlan', bundle.Basisrate);
-          }
-          
-          const response = await fetch(apiUrl.toString());
-          const data = await response.json();
-          
-          console.log('Room availability data:', data);
-          
-          // Process and display the availability data
-          if (data.success && data.availability && data.availability.length > 0) {
-            displayAvailabilityData(data.availability);
-          } else {
-            // Hide loading indicator and show no data message
-            if (loadingElement) {
-              loadingElement.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center italic">Keine Verfügbarkeitsdaten verfügbar</p>';
-            }
-          }
-        } catch (error) {
-          console.error('Error checking room availability:', error);
-          // Show error message
-          const loadingElement = document.getElementById(`availability-loading-${id}`);
-          if (loadingElement) {
-            loadingElement.innerHTML = '<p class="text-red-500 dark:text-red-400 text-center italic">Fehler beim Abrufen der Verfügbarkeit</p>';
-          }
-        }
+    // Find all Svelte AvailabilityLoader components and update their visibility
+    document.addEventListener('bundleModalShown', (event) => {
+      if (event.detail && event.detail.id === id) {
+        console.log(`Modal ${id} shown - notifying Svelte components`);
+        
+        // Update any Svelte components - they'll handle the rest
+        // This is a fallback in case the props don't update automatically
+        const event = new CustomEvent('availabilityModalShown', { detail: { id } });
+        document.dispatchEvent(event);
       }
+    });
+
+    // Helper function to format date for API (YYYY-MM-DD)
+    function formatDateForAPI(date) {
+      const d = new Date(date);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
-    
-    // Store the availability data globally for filtering
-    let globalAvailabilityData = [];
     
     // Function to display availability data
     function displayAvailabilityData(availabilityData) {
@@ -414,9 +387,11 @@ const imageUrl = bundle.TeaserImage?.filename || "/images/placeholder.jpg";
           return date;
         };
         
-        // Store valid dates for filtering
+        // Store valid dates for filtering and pass to the date picker
         window.validDatesForModal = window.validDatesForModal || {};
         window.validDatesForModal[id] = validDates;
+        
+        // We'll determine fully booked days later when initializing the date picker
         
         // Find the earliest available date in the data
         let earliestAvailableDate = null;
@@ -447,45 +422,159 @@ const imageUrl = bundle.TeaserImage?.filename || "/images/placeholder.jpg";
           }
         }
         
-        // Store selected dates
-        let selectedFromDate = earliestAvailableDate ? formatDateForInput(earliestAvailableDate) : 
-                              (bundle.AnreiseVon || (minDate ? formatDateForInput(minDate) : null));
-        let selectedToDate = departureDate ? formatDateForInput(departureDate) : 
-                            (bundle.AnreiseBis || (maxDate ? formatDateForInput(maxDate) : null));
-                            
-        // Set the initial values for the date inputs
-        if (selectedFromDate) {
-          const dateFromInput = document.getElementById(`date-from-${id}`);
-          if (dateFromInput) dateFromInput.value = selectedFromDate;
+        console.log('[DEBUG] Fully booked days:', fullyBookedDays);
+        
+        console.log('[DEBUG] Starting OfferDatePicker initialization');
+        console.log('[DEBUG] Bundle ID:', id);
+        console.log('[DEBUG] Container selector:', `#date-picker-container-${id}`);
+        
+        // Add a visual indicator that we're trying to load the component
+        const datePickerContainer = document.getElementById(`date-picker-container-${id}`);
+        if (datePickerContainer) {
+          datePickerContainer.innerHTML = '<div style="padding: 10px; background-color: #f0f0f0; border: 1px dashed #999;">Loading date picker...</div>';
+          console.log('[DEBUG] Added loading indicator to container');
+        } else {
+          console.error('[DEBUG] Container not found before import');
         }
         
-        if (selectedToDate) {
-          const dateToInput = document.getElementById(`date-to-${id}`);
-          if (dateToInput) dateToInput.value = selectedToDate;
-        }
+        // Try alternative import approaches
+        console.log('[DEBUG] Attempting to import OfferDatePicker component');
         
-        // Listen for date selection events
-        dateFromInput.addEventListener('dateSelected', function(e) {
-          selectedFromDate = e.detail.isoDate;
-          // Update the to date min if needed
-          if (dateToInput) {
-            dateToInput.min = selectedFromDate;
-            
-            // If to date is before from date, update it
-            if (new Date(dateToInput.value) < new Date(selectedFromDate)) {
-              // Set to date to from date + 3 days (minimum stay)
-              const newToDate = new Date(selectedFromDate);
-              newToDate.setDate(newToDate.getDate() + 3);
-              dateToInput.value = formatDateForInput(newToDate);
-              selectedToDate = formatDateForInput(newToDate);
-            }
+        // Use dynamic import with the correct path
+        try {
+          console.log('[DEBUG] Trying to import OfferDatePicker component');
+          // Use the correct path format for Astro's client-side imports
+          import('/src/components/offers/OfferDatePicker.svelte')
+            .then(module => {
+              console.log('[DEBUG] Import successful, module:', module);
+              const OfferDatePicker = module.default;
+              console.log('[DEBUG] OfferDatePicker component:', OfferDatePicker);
+              
+              if (typeof OfferDatePicker === 'function') {
+                initializeComponent(OfferDatePicker);
+              } else {
+                console.error('[DEBUG] OfferDatePicker is not a constructor:', OfferDatePicker);
+                if (datePickerContainer) {
+                  datePickerContainer.innerHTML = '<div style="padding: 10px; background-color: #ffeeee; border: 1px solid #ff0000;">Invalid component format</div>';
+                }
+              }
+            })
+            .catch(error => {
+              console.error('[DEBUG] Import failed:', error);
+              console.error('[DEBUG] Error stack:', error.stack);
+              
+              // Try alternative path as fallback
+              console.log('[DEBUG] Trying alternative import path');
+              import('./OfferDatePicker.svelte')
+                .then(module => {
+                  console.log('[DEBUG] Alternative import successful');
+                  initializeComponent(module.default);
+                })
+                .catch(error2 => {
+                  console.error('[DEBUG] All import attempts failed');
+                  if (datePickerContainer) {
+                    datePickerContainer.innerHTML = `
+                      <div style="padding: 10px; background-color: #ffeeee; border: 1px solid #ff0000;">
+                        <p>Failed to load date picker component</p>
+                        <p>Error: ${error.message}</p>
+                        <button onclick="window.location.reload()" class="px-3 py-1 mt-2 bg-blue-500 text-white rounded">
+                          Reload page
+                        </button>
+                      </div>`;
+                  }
+                });
+            });
+        } catch (outerError) {
+          console.error('[DEBUG] Exception during import attempts:', outerError);
+          if (datePickerContainer) {
+            datePickerContainer.innerHTML = '<div style="padding: 10px; background-color: #ffeeee; border: 1px solid #ff0000;">Error loading component</div>';
           }
-        });
+        }
         
-        dateToInput.addEventListener('dateSelected', function(e) {
-          selectedToDate = e.detail.isoDate;
-          // No need to update the from date max as the HTML input handles this
-        });
+        // Helper function to initialize the component
+        function initializeComponent(OfferDatePickerComponent) {
+          console.log('[DEBUG] Initializing component with:', {
+            minArrival,
+            maxArrival,
+            minStay,
+            fullyBookedDays: fullyBookedDays.length
+          });
+          
+          // Get the container again in case the DOM has changed
+          const container = document.getElementById(`date-picker-container-${id}`);
+          if (!container) {
+            console.error('[DEBUG] Container not found during initialization');
+            return;
+          }
+          
+          // Clear the loading indicator
+          container.innerHTML = '';
+          
+          try {
+            console.log('[DEBUG] Creating component instance');
+            const datePicker = new OfferDatePickerComponent({
+              target: container,
+              props: {
+                minArrival: minArrival,
+                maxArrival: maxArrival,
+                minStay: minStay,
+                fullyBookedDays: fullyBookedDays
+              }
+            });
+            
+            console.log('[DEBUG] Component instance created successfully');
+            
+            // Store the date picker instance for later reference
+            window.offerDatePickers = window.offerDatePickers || {};
+            window.offerDatePickers[id] = datePicker;
+            
+            // Listen for selection events from the date picker
+            datePicker.$on('selection', (event) => {
+              console.log('[DEBUG] Selection event received:', event.detail);
+              const { arrival, departure } = event.detail;
+              
+              if (arrival) {
+                selectedFromDate = formatDateForInput(arrival);
+                console.log('[DEBUG] Selected arrival date:', selectedFromDate);
+              }
+              
+              if (departure) {
+                selectedToDate = formatDateForInput(departure);
+                console.log('[DEBUG] Selected departure date:', selectedToDate);
+              }
+              
+              // Apply the filter with the selected date range if both dates are selected
+              if (selectedFromDate && selectedToDate) {
+                console.log('[DEBUG] Filtering availability with date range:', selectedFromDate, 'to', selectedToDate);
+                filterAvailabilityByDateRange(selectedFromDate, selectedToDate);
+              }
+            });
+            
+            // Set initial dates if available
+            if (earliestAvailableDate) {
+              const initialArrival = earliestAvailableDate;
+              const initialDeparture = new Date(initialArrival);
+              initialDeparture.setDate(initialDeparture.getDate() + minStay);
+              
+              console.log('[DEBUG] Setting initial dates:', initialArrival, 'to', initialDeparture);
+              datePicker.$set({
+                arrival: initialArrival,
+                departure: initialDeparture
+              });
+              
+              selectedFromDate = formatDateForInput(initialArrival);
+              selectedToDate = formatDateForInput(initialDeparture);
+              
+              // Apply the initial filter
+              console.log('[DEBUG] Applying initial filter with dates:', selectedFromDate, 'to', selectedToDate);
+              filterAvailabilityByDateRange(selectedFromDate, selectedToDate);
+            }
+          } catch (error) {
+            console.error('[DEBUG] Error during component initialization:', error);
+            console.error('[DEBUG] Error stack:', error.stack);
+            container.innerHTML = '<div style="padding: 10px; background-color: #ffeeee; border: 1px solid #ff0000;">Error initializing date picker</div>';
+          }
+        }
         
         // Add event listeners for the apply and reset buttons
         applyButton.addEventListener('click', function() {
@@ -566,38 +655,35 @@ const imageUrl = bundle.TeaserImage?.filename || "/images/placeholder.jpg";
     
     // Function to filter availability data by date range
     function filterAvailabilityByDateRange(fromDate, toDate) {
-      const datesContainer = document.getElementById(`availability-dates-${id}`);
-      const totalAvailabilityElement = document.getElementById(`total-availability-${id}`);
+      if (!fromDate || !toDate || !globalAvailabilityData || globalAvailabilityData.length === 0) {
+        return;
+      }
       
-      if (!datesContainer) return;
+      console.log(`Filtering availability from ${fromDate} to ${toDate}`);
       
-      // Clear previous content
-      datesContainer.innerHTML = '';
-      
-      // Get the category codes from the bundle
-      const categoryCodes = bundle.Categories.split(',').map(cat => cat.trim());
-      
-      // Convert input dates to Date objects
+      // Convert string dates to Date objects for comparison
       const fromDateObj = new Date(fromDate);
       const toDateObj = new Date(toDate);
       
-      // Set time to midnight to ensure proper comparison
-      fromDateObj.setHours(0, 0, 0, 0);
-      toDateObj.setHours(23, 59, 59, 999);
-      
-      // Filter the data based on the date range
-      const filteredData = globalAvailabilityData.filter(entry => {
-        const entryDate = new Date(entry.date);
-        entryDate.setHours(0, 0, 0, 0);
-        return entryDate >= fromDateObj && entryDate <= toDateObj;
+      // Filter the data to only include dates within the range
+      const filteredData = globalAvailabilityData.filter(day => {
+        const dayDate = new Date(day.date);
+        return dayDate >= fromDateObj && dayDate <= toDateObj;
       });
       
-      // Calculate total availability for filtered data
-      const totalAvailability = filteredData.reduce((sum, dateEntry) => sum + dateEntry.totalSellableCount, 0);
+      // Display the filtered data
+      displayAvailabilityData(filteredData);
       
-      // Update total availability display
-      if (totalAvailabilityElement) {
-        totalAvailabilityElement.textContent = `${totalAvailability} Zimmer verfügbar`;
+      // Update the selected date range display
+      const dateRangeElement = document.getElementById(`selected-date-range-${id}`);
+      if (dateRangeElement) {
+        // Format dates for display (DD.MM.YYYY)
+        const formatDisplayDate = (dateStr) => {
+          const date = new Date(dateStr);
+          return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        };
+        
+        dateRangeElement.textContent = `${formatDisplayDate(fromDate)} - ${formatDisplayDate(toDate)}`;
       }
       
       // Render the filtered cards
@@ -686,19 +772,31 @@ const imageUrl = bundle.TeaserImage?.filename || "/images/placeholder.jpg";
     observer.observe(modal, { attributes: true });
     
     // Close modal when clicking on close buttons
+    // Define the hideModal function
+    function hideModal() {
+      if (!modal) return; // Safety check
+      modal.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+    }
+    
+    // Set up close buttons
     const closeButtons = modal.querySelectorAll('.modal-close');
     closeButtons.forEach(button => {
-      button.addEventListener('click', () => {
-        modal.classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
-      });
+      button.addEventListener('click', hideModal);
     });
+  });
     
     // Close modal when clicking outside of it
     modal.addEventListener('click', (event) => {
       if (event.target === modal) {
         modal.classList.add('hidden');
         document.body.classList.remove('overflow-hidden');
+        // Clear dates in the store
+        if(window.setStartDate) window.setStartDate(null);
+        if(window.setEndDate) window.setEndDate(null);
+        // Hide rooms container
+        const availableRoomsContainer = document.getElementById(`available-rooms-container-${id}`);
+        if (availableRoomsContainer) availableRoomsContainer.classList.add('hidden');
       }
     });
     
@@ -707,8 +805,227 @@ const imageUrl = bundle.TeaserImage?.filename || "/images/placeholder.jpg";
       if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
         modal.classList.add('hidden');
         document.body.classList.remove('overflow-hidden');
+        // Clear dates in the store
+        if(window.setStartDate) window.setStartDate(null);
+        if(window.setEndDate) window.setEndDate(null);
+        // Hide rooms container
+        const availableRoomsContainer = document.getElementById(`available-rooms-container-${id}`);
+        if (availableRoomsContainer) availableRoomsContainer.classList.add('hidden');
       }
     });
+  });
+  
+  // Setup date picker event listener
+  function setupDatePickerEvents() {
+    document.addEventListener('dateSelection', async (e) => {
+      console.log('Date selection event received:', e.detail);
+      const detail = e.detail;
+      
+      // Get the loading indicator and rooms container
+      const loadingIndicator = document.getElementById(`availability-loading-${id}`);
+      const availableRoomsContainer = document.getElementById(`available-rooms-container-${id}`);
+      
+      if (detail.complete && detail.arrival && detail.departure) {
+        // Both dates are selected, just filter the data in the store (no API fetch)
+        console.log(`Selected date range: ${detail.arrival} to ${detail.departure}`);
+        if (loadingIndicator) loadingIndicator.classList.add('hidden');
+        if (availableRoomsContainer) availableRoomsContainer.classList.remove('hidden');
+        // Import the filterRoomDataByDateRange function from the store
+        const { filterRoomDataByDateRange, loadRoomsData, loadServicesData, setCurrentBundle } = await import('../../../src/stores/roomStore.js');
+        filterRoomDataByDateRange(detail.arrival, detail.departure);
+        
+        // Load additional data to the store if available - with extra debug
+        console.log('[DEBUG] Date selection complete - loading store data');
+        
+        // Force create arrays if undefined
+        if (typeof window.hotelRooms === 'undefined' || window.hotelRooms === null) window.hotelRooms = [];
+        if (typeof window.hotelServices === 'undefined' || window.hotelServices === null) window.hotelServices = [];
+        
+        // Explicitly clone arrays to avoid reference issues
+        const rooms = [...(window.hotelRooms || [])];
+        const services = [...(window.hotelServices || [])];
+        
+        console.log('[DEBUG] Loading data to store:', {
+          rooms: rooms.length, 
+          services: services.length,
+          bundle: window.currentBundle ? 'available' : 'not set'
+        });
+        
+        loadRoomsData(rooms);
+        loadServicesData(services);
+        if (window.currentBundle) setCurrentBundle(window.currentBundle);
+      } else {
+        // Hide available rooms when dates are not complete
+        if (availableRoomsContainer) availableRoomsContainer.classList.add('hidden');
+        if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+      }
+    });
+  }
+  
+  function initializeModal() {
+    const modal = document.getElementById(id);
+    if (!modal) return;
+    
+    // Get all open buttons that target this modal
+    const openButtons = document.querySelectorAll(`[data-modal-target="${id}"]`);
+    const closeButtons = modal.querySelectorAll('.modal-close');
+    
+    // Add click event to open buttons
+    openButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        modal.classList.remove('hidden');
+        document.body.classList.add('overflow-hidden');
+        
+        // Reset the store dates first
+        // Use a safer approach to access dynamically added window properties
+        if(typeof window['setStartDate'] === 'function') window['setStartDate'](null);
+        if(typeof window['setEndDate'] === 'function') window['setEndDate'](null);
+        
+        // Immediately load all data into the store
+        const storeFunctions = await import('../../../src/stores/roomStore.js');
+        
+        // Make this bundle accessible globally for debug (no need to use window.bundle)
+        console.log('[DEBUG] Making bundle available globally');
+        window.currentBundle = bundle;
+        
+        // Set the current bundle in the store
+        if (storeFunctions.setCurrentBundle) {
+          console.log('[DEBUG] Setting current bundle in store:', bundle.Title);
+          storeFunctions.setCurrentBundle(bundle);
+        }
+        
+        // Log what global data we have available
+        console.log('[DEBUG] Global data check:', {
+          hotelRooms: window.hotelRooms ? window.hotelRooms.length + ' items' : 'not set',
+          hotelServices: window.hotelServices ? window.hotelServices.length + ' items' : 'not set',
+          currentBundle: window.currentBundle ? 'set' : 'not set'
+        });
+        
+        // Set global data and load it into the store - with specific check for null/undefined
+        if (typeof window.hotelRooms === 'undefined' || window.hotelRooms === null) {
+          console.log('[DEBUG] No global rooms data found, creating empty array');
+          window.hotelRooms = [];
+        }
+        
+        // FORCE create arrays if still undefined (double-check after previous step)
+        if (typeof window.hotelRooms === 'undefined' || window.hotelRooms === null) window.hotelRooms = [];
+        if (typeof window.hotelServices === 'undefined' || window.hotelServices === null) window.hotelServices = [];
+        
+        // Load the data into the store - with explicit cloning to avoid reference issues
+        if (storeFunctions.loadRoomsData) {
+          const rooms = [...(window.hotelRooms || [])];
+          console.log('[DEBUG] Loading rooms data into store:', rooms.length, 'items');
+          storeFunctions.loadRoomsData(rooms);
+        }
+        
+        if (storeFunctions.loadServicesData) {
+          const services = [...(window.hotelServices || [])];
+          console.log('[DEBUG] Loading services data into store:', services.length, 'items');
+          storeFunctions.loadServicesData(services);
+        }
+        
+        // Force bundle into store as well
+        if (storeFunctions.setCurrentBundle) {
+          console.log('[DEBUG] Force setting bundle again to ensure update');
+          storeFunctions.setCurrentBundle({...bundle});
+        }
+        
+        // Hide rooms container when opening (until dates are selected)
+        const availableRoomsContainer = document.getElementById(`available-rooms-container-${id}`);
+        if (availableRoomsContainer) availableRoomsContainer.classList.add('hidden');
+        
+        // Check room availability when opening the modal
+        checkRoomAvailability();
+        
+        // Re-setup date picker events when modal opens
+        setTimeout(() => {
+          setupDatePickerEvents();
+          
+          // Reinitialize the date picker with this bundle's constraints
+          if (window.offerDatePickers && window.offerDatePickers[id]) {
+            try {
+              const datePicker = window.offerDatePickers[id];
+              // Update the date picker's constraints based on this offer's dates
+              datePicker.$set({
+                minArrival: new Date(bundle.AnreiseVon || new Date()),
+                maxArrival: new Date(bundle.AnreiseBis || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000)),
+                minStay: bundle.Mindestaufenthalt ? parseInt(bundle.Mindestaufenthalt) : 3,
+                arrival: null,
+                departure: null
+              });
+              console.log('[DEBUG] Date picker reinitialized for bundle:', bundle.Title);
+            } catch (e) {
+              console.error('[DEBUG] Error reinitializing date picker:', e);
+            }
+          }
+        }, 500);
+      });
+    });
+    
+    // Add click event to close buttons
+    closeButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+      });
+    });
+    
+    // Close modal when clicking outside the content
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
+        document.body.classList.remove('overflow-hidden');
+      }
+    });
+  }
+  
+  // Add a MutationObserver to detect when the modal becomes visible
+  const observer = new MutationObserver((mutations) => {
+    mutations.forEach((mutation) => {
+      if (mutation.attributeName === 'class' && !modal.classList.contains('hidden')) {
+        checkRoomAvailability();
+      }
+    });
+  });
+  
+  observer.observe(modal, { attributes: true });
+  
+  // Initialize modal functionality
+  initializeModal();
+  
+  // Check room availability when the page loads
+  checkRoomAvailability();
+  
+  // Setup date picker event listener
+  setTimeout(() => {
+    setupDatePickerEvents();
+  }, 500);
+</script>
+
+<script>
+  // Handle adults and children changes from the OfferDatePicker
+  document.addEventListener('DOMContentLoaded', () => {
+    const datePicker = document.querySelector('.offer-date-picker');
+    if (datePicker) {
+      // Listen for custom events from the OfferDatePicker
+      datePicker.addEventListener('adultsChange', (event) => {
+        // Create a custom event to pass to the AvailableRooms component
+        const customEvent = new CustomEvent('adultsChange', {
+          detail: event.detail,
+          bubbles: true
+        });
+        document.dispatchEvent(customEvent);
+      });
+      
+      datePicker.addEventListener('childrenChange', (event) => {
+        // Create a custom event to pass to the AvailableRooms component
+        const customEvent = new CustomEvent('childrenChange', {
+          detail: event.detail,
+          bubbles: true
+        });
+        document.dispatchEvent(customEvent);
+      });
+    }
   });
 </script>
 
